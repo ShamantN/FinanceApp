@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "557308803278",
+    "project_id": "finance-5d1fa",
+    "storage_bucket": "finance-5d1fa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:557308803278:android:42e52e23e9ddda70b1789f",
+        "android_client_info": {
+          "package_name": "com.example.revesion"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHH9xS7bcNWa1iiPIGxGcnZiffiM_6Sqg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
