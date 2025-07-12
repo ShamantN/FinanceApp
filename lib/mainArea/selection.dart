@@ -31,16 +31,53 @@ class _SelectOptionState extends State<SelectOption> {
   ];
 
   List<Widget> files = [
-    BankDetails(),
+    BankDetailsPage(),
     PostOffice(),
     HealthInsurance(),
     LifeInsurance(),
     VehicleInsurance()
   ];
 
+  int navIdex = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.shifting,
+          showUnselectedLabels: true,
+          unselectedItemColor: Colors.white70,
+          selectedFontSize: 18,
+          selectedIconTheme: IconThemeData(size: 30),
+          fixedColor: Colors.black,
+          onTap: (index) {
+            setState(() {
+              navIdex = index;
+            });
+          },
+          currentIndex: navIdex,
+          items: [
+            BottomNavigationBarItem(
+              backgroundColor: Colors.grey[500],
+              icon: Icon(
+                Icons.home_rounded,
+              ),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+                backgroundColor: Colors.grey,
+                icon: Icon(Icons.article),
+                label: 'Documents'),
+            BottomNavigationBarItem(
+                backgroundColor: Colors.grey,
+                icon: Icon(Icons.notification_add),
+                label: 'Notifications'),
+            BottomNavigationBarItem(
+                backgroundColor: Colors.grey,
+                icon: Icon(Icons.person),
+                label: 'Profile'),
+          ],
+        ),
         backgroundColor: const Color.fromARGB(255, 78, 125, 150),
         appBar: AppBar(
           actions: [

@@ -9,7 +9,7 @@ import 'login/test.dart';
 import 'mainArea/selection.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-void main() async {
+Future main() async {
   WidgetsFlutterBinding
       .ensureInitialized(); // runApp by default calls this function but since we call initializeApp, WidgetsFlutterBinding wont be intialized until after the next line
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
             if (snapshot.data != null) {
               return const SelectOption();
             } else {
-              return const SignIn();
+              return const Login();
             }
           }),
       debugShowCheckedModeBanner: false,

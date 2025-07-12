@@ -1,10 +1,14 @@
 // ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors, unused_field, avoid_print
 
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dob_input_field/dob_input_field.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -36,15 +40,50 @@ class _ProfileState extends State<Profile> {
 
   String? selectedCountry;
   DateTime? selectedDate;
+  File? _image;
+
+  Future<void> pickImage(ImageSource imgSrc) async {
+    final pickedImage = await ImagePicker().pickImage(source: imgSrc);
+
+    if (pickedImage != null) {
+      setState(() {
+        _image = File(pickedImage.path);
+      });
+    }
+  }
+
+  Future<String> uploadImage() async {
+    if (_image == null) return '';
+    try {
+      // .ref() is the starting point for storage operations
+      // .ref('images') will point to the images folder within the storage bucket
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final imageRef = FirebaseStorage.instance.ref('images').child(fileName);
+      final uploadTask = imageRef.putFile(
+          _image!); //uploadTask represents the entire upload process, it gives control over starting,pausing,cancelling the task that is taking place
+      final taskSnapshot = await uploadTask.whenComplete(() =>
+          null); // taskSnapshot provides progress info(no. of bytes uploaded, total no of bytes, current state of task)
+
+      final downloadURL = await taskSnapshot.ref.getDownloadURL();
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profile Picture uploaded successfully')));
+      return downloadURL;
+    } catch (e) {
+      print(e);
+      return '';
+    }
+  }
 
   Future<void> updateUserData() async {
     try {
       final userUid = authInst.currentUser!.uid;
       final user = firestoreInst.collection("userInfo").doc(userUid);
+      //final imageURL = await uploadImage();
       await user.update({
         'phone': _phoneCtrl.text.trim(),
         'dob': selectedDate,
-        'country': selectedCountry
+        'country': selectedCountry,
+        //'imageURL': imageURL.isNotEmpty ? imageURL : ''
       });
     } catch (e) {
       print(e);
@@ -133,11 +172,25 @@ class _ProfileState extends State<Profile> {
                     ),
                   ),
                   Positioned(
-                    bottom: 20,
-                    right: 15,
-                    child:
-                        Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                  )
+                      bottom: 20,
+                      right: -5,
+                      child: IconButton(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                        },
+                        icon: Icon(Icons.camera_alt,
+                            color: Colors.white, size: 30),
+                      )),
+                  Positioned(
+                      bottom: 20,
+                      right: 140,
+                      child: IconButton(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                        },
+                        icon: Icon(Icons.add_photo_alternate,
+                            color: Colors.white, size: 30),
+                      ))
                 ],
               ),
             ),
@@ -159,7 +212,7 @@ class _ProfileState extends State<Profile> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 200),
+                    padding: const EdgeInsets.only(left: 20, right: 20),
                     child: TextFormField(
                       cursorColor: Colors.white,
                       controller: _nameCtrl,
@@ -191,7 +244,7 @@ class _ProfileState extends State<Profile> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 200),
+                    padding: const EdgeInsets.only(left: 20, right: 20),
                     child: TextFormField(
                       cursorColor: Colors.white,
                       style: TextStyle(color: Colors.white),
@@ -224,14 +277,14 @@ class _ProfileState extends State<Profile> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 200),
+                    padding: const EdgeInsets.only(left: 20, right: 20),
                     child: TextFormField(
                       cursorColor: Colors.white,
                       style: TextStyle(color: Colors.white),
                       keyboardType: TextInputType.phone,
                       controller: _phoneCtrl,
                       decoration: InputDecoration(
-                          suffixIcon: Icon(Icons.email, color: Colors.white),
+                          suffixIcon: Icon(Icons.numbers, color: Colors.white),
                           floatingLabelBehavior: FloatingLabelBehavior.never,
                           focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -257,7 +310,7 @@ class _ProfileState extends State<Profile> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 200),
+                    padding: const EdgeInsets.only(left: 20, right: 20),
                     child: TextFormField(
                       cursorColor: Colors.white,
                       style: TextStyle(color: Colors.white),
@@ -293,7 +346,7 @@ class _ProfileState extends State<Profile> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 200),
+                    padding: const EdgeInsets.only(left: 23, right: 20),
                     child: DOBInputField(
                       initialDate: selectedDate ?? DateTime(1900, 1, 1),
                       cursorColor: Colors.white,
@@ -350,7 +403,7 @@ class _ProfileState extends State<Profile> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 200),
+                    padding: const EdgeInsets.only(left: 23, right: 20),
                     child: DropdownButtonFormField(
                       hint: Text(
                         "Select your country",
@@ -389,7 +442,7 @@ class _ProfileState extends State<Profile> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 10.0),
+                    padding: const EdgeInsets.only(top: 20.0),
                     child: Center(
                       child: SizedBox(
                         width: 300,
