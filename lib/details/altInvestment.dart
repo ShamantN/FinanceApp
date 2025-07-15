@@ -1,89 +1,114 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class PostOfficeInvestmentDetails extends StatefulWidget {
-  const PostOfficeInvestmentDetails({super.key});
+class AlternateInvestmentDetails extends StatefulWidget {
+  const AlternateInvestmentDetails({super.key});
 
   @override
-  State<PostOfficeInvestmentDetails> createState() =>
-      _PostOfficeInvestmentDetailsState();
+  State<AlternateInvestmentDetails> createState() =>
+      _AlternateInvestmentDetailsState();
 }
 
-class _PostOfficeInvestmentDetailsState
-    extends State<PostOfficeInvestmentDetails> {
+class _AlternateInvestmentDetailsState
+    extends State<AlternateInvestmentDetails> {
   final _formKey = GlobalKey<FormState>();
 
-  final _postOfficeNameCtrl = TextEditingController();
-  final _postOfficeAddressCtrl = TextEditingController();
-  final _accountNumberCtrl = TextEditingController();
+  final _nameOfAMCCtrl = TextEditingController();
+  final _registeredEmailCtrl = TextEditingController();
+  final _folioCtrl = TextEditingController();
   final _nomineeCtrl = TextEditingController();
   final _investmentAmountCtrl = TextEditingController();
   final _currentValueCtrl = TextEditingController();
-  final _openingDateCtrl = TextEditingController();
+  final _purchaseDateCtrl = TextEditingController();
   final _maturityDateCtrl = TextEditingController();
-  final _interestRateCtrl = TextEditingController();
+  final _expectedReturnCtrl = TextEditingController();
   final _remarksCtrl = TextEditingController();
 
-  final List<String> postOfficeSchemes = [
-    'Post Office Savings Account (SB)',
-    'National Savings Recurring Deposit Account (RD)',
-    'National Savings Time Deposit Account (TD)',
-    'National Savings Monthly Income Account (MIS)',
-    'Senior Citizens Savings Scheme Account (SCSS)',
-    'Public Provident Fund Account (PPF)',
-    'Sukanya Samriddhi Account (SSA)',
-    'National Savings Certificates (VIIIth Issue) (NSC)',
-    'Kisan Vikas Patra (KVP)',
-    'Mahila Samman Savings Certificate',
+  final List<String> fundTypes = [
+    'Alternative Investment Fund (AIF)',
+    'Mutual Fund',
+    'Portfolio Management Service (PMS)',
+    'Real Estate Investment Trust (REIT)',
+    'Infrastructure Investment Trust (InvIT)',
+    'Commodity Funds',
+    'Hedge Funds',
+    'Private Equity',
+    'Venture Capital',
+    'Angel Investing',
+    'Cryptocurrency',
+    'Gold ETF',
+    'PPF (Public Provident Fund)',
+    'SSY (Sukanya Samriddhi Yojana)',
+    'NSC (National Savings Certificate)',
+    'ELSS (Equity Linked Savings Scheme)',
+    'ULIPs (Unit Linked Insurance Plans)',
+    'Other',
+  ];
+
+  final List<String> amcNames = [
+    'HDFC Asset Management',
+    'ICICI Prudential Asset Management',
+    'SBI Funds Management',
+    'Axis Asset Management',
+    'Kotak Mahindra Asset Management',
+    'Birla Sun Life Asset Management',
+    'Franklin Templeton Asset Management',
+    'DSP Investment Managers',
+    'Nippon India Asset Management',
+    'UTI Asset Management',
+    'Tata Asset Management',
+    'Invesco Asset Management',
+    'L&T Investment Management',
+    'Mirae Asset Global Investments',
+    'Motilal Oswal Asset Management',
+    'Reliance Asset Management',
+    'PGIM India Asset Management',
+    'Mahindra Manulife Asset Management',
+    'Canara Robeco Asset Management',
+    'HSBC Asset Management',
+    'Government of India (for PPF/SSY/NSC)',
+    'Post Office (for PPF/SSY/NSC)',
+    'Other',
   ];
 
   final List<String> investmentCategories = [
-    'Savings Account',
-    'Recurring Deposit',
-    'Time Deposit/Fixed Deposit',
-    'Monthly Income Scheme',
-    'Senior Citizens Scheme',
-    'Tax Saving Scheme',
-    'Girl Child Savings',
-    'Investment Certificate',
-    'Doubling Scheme',
-    'Women Empowerment Scheme',
+    'Equity Oriented',
+    'Debt Oriented',
+    'Hybrid/Balanced',
+    'Gold/Commodity',
+    'Real Estate',
+    'Infrastructure',
+    'Alternative Assets',
+    'International',
+    'Tax Saving',
+    'Government Schemes',
   ];
 
   final List<String> riskLevels = [
     'Very Low Risk',
     'Low Risk',
-    'Government Guaranteed',
+    'Moderate Risk',
+    'High Risk',
+    'Very High Risk',
   ];
 
-  final List<String> tenureOptions = [
-    '1 Year',
-    '2 Years',
-    '3 Years',
-    '5 Years',
-    '10 Years',
-    '15 Years',
-    '21 Years',
-    'Until Maturity',
-  ];
-
-  String? selectedScheme;
+  String? selectedFundType;
+  String? selectedAMC;
   String? selectedCategory;
   String? selectedRiskLevel;
-  String? selectedTenure;
   bool _isSubmitting = false;
 
   @override
   void dispose() {
-    _postOfficeNameCtrl.dispose();
-    _postOfficeAddressCtrl.dispose();
-    _accountNumberCtrl.dispose();
+    _nameOfAMCCtrl.dispose();
+    _registeredEmailCtrl.dispose();
+    _folioCtrl.dispose();
     _nomineeCtrl.dispose();
     _investmentAmountCtrl.dispose();
     _currentValueCtrl.dispose();
-    _openingDateCtrl.dispose();
+    _purchaseDateCtrl.dispose();
     _maturityDateCtrl.dispose();
-    _interestRateCtrl.dispose();
+    _expectedReturnCtrl.dispose();
     _remarksCtrl.dispose();
     super.dispose();
   }
@@ -103,32 +128,31 @@ class _PostOfficeInvestmentDetailsState
 
       // Create data object
       final investmentData = {
-        'post_office_name': _postOfficeNameCtrl.text,
-        'post_office_address': _postOfficeAddressCtrl.text,
-        'account_number': _accountNumberCtrl.text,
-        'scheme_type': selectedScheme,
+        'amc_name': selectedAMC == 'Other' ? _nameOfAMCCtrl.text : selectedAMC,
+        'registered_email': _registeredEmailCtrl.text,
+        'folio_number': _folioCtrl.text,
+        'fund_type': selectedFundType,
         'investment_category': selectedCategory,
         'risk_level': selectedRiskLevel,
-        'tenure': selectedTenure,
         'nominee_name': _nomineeCtrl.text,
         'investment_amount': _investmentAmountCtrl.text,
         'current_value': _currentValueCtrl.text,
-        'opening_date': _openingDateCtrl.text,
+        'purchase_date': _purchaseDateCtrl.text,
         'maturity_date':
             _maturityDateCtrl.text.isEmpty ? null : _maturityDateCtrl.text,
-        'interest_rate': _interestRateCtrl.text,
+        'expected_return': _expectedReturnCtrl.text,
         'remarks': _remarksCtrl.text.isEmpty ? null : _remarksCtrl.text,
         'created_at': DateTime.now().toIso8601String(),
       };
 
       // TODO: Replace with actual API call or database save
-      print('Post Office Investment Data: $investmentData');
+      print('Investment Data: $investmentData');
 
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Post Office Investment Details saved successfully!'),
+            content: Text('Alternate Investment Details saved successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
@@ -158,22 +182,22 @@ class _PostOfficeInvestmentDetailsState
   }
 
   void _clearForm() {
-    _postOfficeNameCtrl.clear();
-    _postOfficeAddressCtrl.clear();
-    _accountNumberCtrl.clear();
+    _nameOfAMCCtrl.clear();
+    _registeredEmailCtrl.clear();
+    _folioCtrl.clear();
     _nomineeCtrl.clear();
     _investmentAmountCtrl.clear();
     _currentValueCtrl.clear();
-    _openingDateCtrl.clear();
+    _purchaseDateCtrl.clear();
     _maturityDateCtrl.clear();
-    _interestRateCtrl.clear();
+    _expectedReturnCtrl.clear();
     _remarksCtrl.clear();
 
     setState(() {
-      selectedScheme = null;
+      selectedFundType = null;
+      selectedAMC = null;
       selectedCategory = null;
       selectedRiskLevel = null;
-      selectedTenure = null;
     });
   }
 
@@ -182,9 +206,9 @@ class _PostOfficeInvestmentDetailsState
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(colors: [
-          Color.fromARGB(255, 255, 165, 0),
-          Color.fromARGB(255, 255, 140, 0),
-          Color.fromARGB(255, 255, 69, 0),
+          Color.fromARGB(255, 154, 197, 232),
+          Color.fromARGB(255, 115, 149, 169),
+          Color.fromARGB(255, 103, 149, 209),
         ], stops: [
           0.0,
           0.5,
@@ -201,7 +225,7 @@ class _PostOfficeInvestmentDetailsState
           toolbarHeight: 80,
           centerTitle: true,
           title: const Text(
-            "Post Office Investment Details",
+            "Alternate Investment Details",
             style: TextStyle(
                 fontFamily: 'Helvetica',
                 fontWeight: FontWeight.bold,
@@ -217,7 +241,7 @@ class _PostOfficeInvestmentDetailsState
                 color: Colors.white,
                 size: 40,
               )),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.blue,
         ),
         body: ListView(
           children: [
@@ -230,122 +254,7 @@ class _PostOfficeInvestmentDetailsState
                   const Padding(
                     padding: EdgeInsets.only(left: 23, bottom: 6),
                     child: Text(
-                      "Post Office Name",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      controller: _postOfficeNameCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                          suffixIcon: const Icon(Icons.local_post_office,
-                              color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Post Office Name',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter post office name';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Post Office Address",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      controller: _postOfficeAddressCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                          suffixIcon: const Icon(Icons.location_on,
-                              color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Post Office Address',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter post office address';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Account Number",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      controller: _accountNumberCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                          suffixIcon: const Icon(Icons.account_balance,
-                              color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Account Number',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter account number';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Scheme Type",
+                      "Name of AMC",
                       style: TextStyle(
                           fontFamily: "Helvetica",
                           fontWeight: FontWeight.bold,
@@ -356,25 +265,25 @@ class _PostOfficeInvestmentDetailsState
                     padding: const EdgeInsets.only(left: 23, right: 20),
                     child: DropdownButtonFormField(
                       hint: const Text(
-                        "Select Scheme Type",
+                        "Select AMC Name",
                         style: TextStyle(color: Colors.white70),
                       ),
-                      dropdownColor: Colors.orange,
+                      dropdownColor: Colors.lightBlue,
                       icon: const Icon(Icons.keyboard_arrow_down),
                       iconEnabledColor: Colors.white,
-                      value: selectedScheme,
-                      items: postOfficeSchemes
-                          .map((scheme) => DropdownMenuItem<String>(
-                                value: scheme,
+                      value: selectedAMC,
+                      items: amcNames
+                          .map((amc) => DropdownMenuItem<String>(
+                                value: amc,
                                 child: Text(
-                                  scheme,
+                                  amc,
                                   style: const TextStyle(color: Colors.white),
                                 ),
                               ))
                           .toList(),
                       onChanged: (newVal) {
                         setState(() {
-                          selectedScheme = newVal.toString();
+                          selectedAMC = newVal.toString();
                         });
                       },
                       decoration: InputDecoration(
@@ -389,7 +298,173 @@ class _PostOfficeInvestmentDetailsState
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please select scheme type';
+                          return 'Please select AMC name';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  // Custom AMC name field if "Other" is selected
+                  if (selectedAMC == 'Other')
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(left: 20, right: 20, top: 10),
+                      child: TextFormField(
+                        cursorColor: Colors.white,
+                        controller: _nameOfAMCCtrl,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                            suffixIcon:
+                                const Icon(Icons.business, color: Colors.white),
+                            floatingLabelBehavior: FloatingLabelBehavior.never,
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2)),
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2)),
+                            labelText: 'Enter Custom AMC Name',
+                            labelStyle: const TextStyle(color: Colors.white70)),
+                        validator: (value) {
+                          if (selectedAMC == 'Other' &&
+                              (value == null || value.isEmpty)) {
+                            return 'Please enter AMC name';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
+                    child: Text(
+                      "Registered Email ID",
+                      style: TextStyle(
+                          fontFamily: "Helvetica",
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 20),
+                    child: TextFormField(
+                      cursorColor: Colors.white,
+                      controller: _registeredEmailCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                          suffixIcon:
+                              const Icon(Icons.email, color: Colors.white),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: Colors.white, width: 2)),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: Colors.white70, width: 2)),
+                          labelText: 'Enter Registered Email ID',
+                          labelStyle: const TextStyle(color: Colors.white70)),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter registered email ID';
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
+                          return 'Please enter valid email address';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
+                    child: Text(
+                      "Folio Number",
+                      style: TextStyle(
+                          fontFamily: "Helvetica",
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 20),
+                    child: TextFormField(
+                      cursorColor: Colors.white,
+                      controller: _folioCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                          suffixIcon:
+                              const Icon(Icons.folder, color: Colors.white),
+                          floatingLabelBehavior: FloatingLabelBehavior.never,
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: Colors.white, width: 2)),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: Colors.white70, width: 2)),
+                          labelText: 'Enter Folio Number',
+                          labelStyle: const TextStyle(color: Colors.white70)),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter folio number';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
+                    child: Text(
+                      "Type of Fund",
+                      style: TextStyle(
+                          fontFamily: "Helvetica",
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 23, right: 20),
+                    child: DropdownButtonFormField(
+                      hint: const Text(
+                        "Select Fund Type",
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      dropdownColor: Colors.lightBlue,
+                      icon: const Icon(Icons.keyboard_arrow_down),
+                      iconEnabledColor: Colors.white,
+                      value: selectedFundType,
+                      items: fundTypes
+                          .map((type) => DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(
+                                  type,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (newVal) {
+                        setState(() {
+                          selectedFundType = newVal.toString();
+                        });
+                      },
+                      decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Colors.white70, width: 2)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: Colors.white, width: 2)),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select fund type';
                         }
                         return null;
                       },
@@ -412,7 +487,7 @@ class _PostOfficeInvestmentDetailsState
                         "Select Investment Category",
                         style: TextStyle(color: Colors.white70),
                       ),
-                      dropdownColor: Colors.orange,
+                      dropdownColor: Colors.lightBlue,
                       icon: const Icon(Icons.keyboard_arrow_down),
                       iconEnabledColor: Colors.white,
                       value: selectedCategory,
@@ -465,7 +540,7 @@ class _PostOfficeInvestmentDetailsState
                         "Select Risk Level",
                         style: TextStyle(color: Colors.white70),
                       ),
-                      dropdownColor: Colors.orange,
+                      dropdownColor: Colors.lightBlue,
                       icon: const Icon(Icons.keyboard_arrow_down),
                       iconEnabledColor: Colors.white,
                       value: selectedRiskLevel,
@@ -496,59 +571,6 @@ class _PostOfficeInvestmentDetailsState
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please select risk level';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Tenure",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 20),
-                    child: DropdownButtonFormField(
-                      hint: const Text(
-                        "Select Tenure",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      dropdownColor: Colors.orange,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      iconEnabledColor: Colors.white,
-                      value: selectedTenure,
-                      items: tenureOptions
-                          .map((tenure) => DropdownMenuItem<String>(
-                                value: tenure,
-                                child: Text(
-                                  tenure,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (newVal) {
-                        setState(() {
-                          selectedTenure = newVal.toString();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white70, width: 2)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white, width: 2)),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select tenure';
                         }
                         return null;
                       },
@@ -681,7 +703,7 @@ class _PostOfficeInvestmentDetailsState
                   const Padding(
                     padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
                     child: Text(
-                      "Opening Date",
+                      "Purchase Date",
                       style: TextStyle(
                           fontFamily: "Helvetica",
                           fontWeight: FontWeight.bold,
@@ -693,7 +715,7 @@ class _PostOfficeInvestmentDetailsState
                     child: TextFormField(
                       cursorColor: Colors.white,
                       style: const TextStyle(color: Colors.white),
-                      controller: _openingDateCtrl,
+                      controller: _purchaseDateCtrl,
                       readOnly: true,
                       decoration: InputDecoration(
                           suffixIcon: const Icon(Icons.calendar_today,
@@ -707,7 +729,7 @@ class _PostOfficeInvestmentDetailsState
                               borderRadius: BorderRadius.circular(10),
                               borderSide: const BorderSide(
                                   color: Colors.white70, width: 2)),
-                          labelText: 'Select Opening Date',
+                          labelText: 'Select Purchase Date',
                           labelStyle: const TextStyle(color: Colors.white70)),
                       onTap: () async {
                         DateTime? picked = await showDatePicker(
@@ -718,14 +740,14 @@ class _PostOfficeInvestmentDetailsState
                         );
                         if (picked != null) {
                           setState(() {
-                            _openingDateCtrl.text =
+                            _purchaseDateCtrl.text =
                                 "${picked.day}/${picked.month}/${picked.year}";
                           });
                         }
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please select opening date';
+                          return 'Please select purchase date';
                         }
                         return null;
                       },
@@ -734,7 +756,7 @@ class _PostOfficeInvestmentDetailsState
                   const Padding(
                     padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
                     child: Text(
-                      "Maturity Date",
+                      "Maturity Date (if applicable)",
                       style: TextStyle(
                           fontFamily: "Helvetica",
                           fontWeight: FontWeight.bold,
@@ -760,7 +782,7 @@ class _PostOfficeInvestmentDetailsState
                               borderRadius: BorderRadius.circular(10),
                               borderSide: const BorderSide(
                                   color: Colors.white70, width: 2)),
-                          labelText: 'Select Maturity Date',
+                          labelText: 'Select Maturity Date (Optional)',
                           labelStyle: const TextStyle(color: Colors.white70)),
                       onTap: () async {
                         DateTime? picked = await showDatePicker(
@@ -777,18 +799,12 @@ class _PostOfficeInvestmentDetailsState
                           });
                         }
                       },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select maturity date';
-                        }
-                        return null;
-                      },
                     ),
                   ),
                   const Padding(
                     padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
                     child: Text(
-                      "Interest Rate (%)",
+                      "Expected Return (%)",
                       style: TextStyle(
                           fontFamily: "Helvetica",
                           fontWeight: FontWeight.bold,
@@ -801,8 +817,8 @@ class _PostOfficeInvestmentDetailsState
                       cursorColor: Colors.white,
                       style: const TextStyle(color: Colors.white),
                       keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      controller: _interestRateCtrl,
+                          TextInputType.numberWithOptions(decimal: true),
+                      controller: _expectedReturnCtrl,
                       decoration: InputDecoration(
                           suffixIcon:
                               const Icon(Icons.percent, color: Colors.white),
@@ -815,14 +831,14 @@ class _PostOfficeInvestmentDetailsState
                               borderRadius: BorderRadius.circular(10),
                               borderSide: const BorderSide(
                                   color: Colors.white70, width: 2)),
-                          labelText: 'Enter Interest Rate (%)',
+                          labelText: 'Enter Expected Return (%)',
                           labelStyle: const TextStyle(color: Colors.white70)),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter interest rate';
+                          return 'Please enter expected return';
                         }
                         if (double.tryParse(value) == null) {
-                          return 'Please enter valid interest rate';
+                          return 'Please enter a valid percentage';
                         }
                         return null;
                       },
@@ -847,7 +863,7 @@ class _PostOfficeInvestmentDetailsState
                       maxLines: 3,
                       decoration: InputDecoration(
                           suffixIcon:
-                              const Icon(Icons.note_add, color: Colors.white),
+                              const Icon(Icons.notes, color: Colors.white),
                           floatingLabelBehavior: FloatingLabelBehavior.never,
                           focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -857,75 +873,36 @@ class _PostOfficeInvestmentDetailsState
                               borderRadius: BorderRadius.circular(10),
                               borderSide: const BorderSide(
                                   color: Colors.white70, width: 2)),
-                          labelText: 'Enter Remarks (Optional)',
+                          labelText: 'Enter Remarks (if any)',
                           labelStyle: const TextStyle(color: Colors.white70)),
                     ),
                   ),
-                  const SizedBox(height: 40),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _clearForm,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.orange,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 30),
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _isSubmitting ? null : _submitForm,
+                      icon: _isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
                               ),
-                            ),
-                            child: const Text(
-                              'Clear Form',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                            )
+                          : const Icon(Icons.save),
+                      label:
+                          Text(_isSubmitting ? 'Saving...' : 'Save Investment'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _submitForm,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.orange,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: _isSubmitting
-                                ? const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                  Colors.orange),
-                                        ),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text('Saving...'),
-                                    ],
-                                  )
-                                : const Text(
-                                    'Save Investment',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 40),

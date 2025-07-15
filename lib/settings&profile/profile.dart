@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:dob_input_field/dob_input_field.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:revesion/bottomNavBar/navigationBar.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -131,6 +132,7 @@ class _ProfileState extends State<Profile> {
         ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
       ),
       child: Scaffold(
+        bottomNavigationBar: CustomNavBar(navIndex: 3),
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           centerTitle: true,

@@ -2,6 +2,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:revesion/bottomNavBar/navigationBar.dart';
 import 'package:revesion/details/HI.dart';
 import 'package:revesion/details/LI.dart';
 import 'package:revesion/details/PO.dart';
@@ -9,6 +10,7 @@ import 'package:revesion/details/VI.dart';
 import 'package:revesion/details/bank.dart';
 import 'package:revesion/settings&profile/profile.dart';
 import 'package:revesion/settings&profile/settings.dart';
+import 'package:revesion/details/altInvestment.dart';
 import 'selectionWidgets.dart';
 
 class SelectOption extends StatefulWidget {
@@ -32,52 +34,17 @@ class _SelectOptionState extends State<SelectOption> {
 
   List<Widget> files = [
     BankDetailsPage(),
-    PostOffice(),
-    HealthInsurance(),
-    LifeInsurance(),
-    VehicleInsurance()
+    PostOfficeInvestmentDetails(),
+    HealthInsuranceDetails(),
+    LifeInsuranceDetails(),
+    VehicleInsuranceDetails(),
+    AlternateInvestmentDetails()
   ];
-
-  int navIdex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.shifting,
-          showUnselectedLabels: true,
-          unselectedItemColor: Colors.white70,
-          selectedFontSize: 18,
-          selectedIconTheme: IconThemeData(size: 30),
-          fixedColor: Colors.black,
-          onTap: (index) {
-            setState(() {
-              navIdex = index;
-            });
-          },
-          currentIndex: navIdex,
-          items: [
-            BottomNavigationBarItem(
-              backgroundColor: Colors.grey[500],
-              icon: Icon(
-                Icons.home_rounded,
-              ),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-                backgroundColor: Colors.grey,
-                icon: Icon(Icons.article),
-                label: 'Documents'),
-            BottomNavigationBarItem(
-                backgroundColor: Colors.grey,
-                icon: Icon(Icons.notification_add),
-                label: 'Notifications'),
-            BottomNavigationBarItem(
-                backgroundColor: Colors.grey,
-                icon: Icon(Icons.person),
-                label: 'Profile'),
-          ],
-        ),
+        bottomNavigationBar: CustomNavBar(navIndex: 0),
         backgroundColor: const Color.fromARGB(255, 78, 125, 150),
         appBar: AppBar(
           actions: [
@@ -274,7 +241,7 @@ class _SelectOptionState extends State<SelectOption> {
                           Options(
                             title: "Redundant",
                             imgPath: images[5],
-                            filePath: files[0],
+                            filePath: files[5],
                           )
                         ],
                       ),

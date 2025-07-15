@@ -2,7 +2,9 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:revesion/firebase_options.dart';
+import 'package:revesion/hive_box_const.dart';
 import 'package:revesion/login/signin.dart';
 import 'package:revesion/settings&profile/profile.dart';
 import 'login/test.dart';
@@ -13,6 +15,9 @@ Future main() async {
   WidgetsFlutterBinding
       .ensureInitialized(); // runApp by default calls this function but since we call initializeApp, WidgetsFlutterBinding wont be intialized until after the next line
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Hive.initFlutter();
+  await Hive.openBox(userHiveBox);
+  
   runApp(const MyApp());
 }
 

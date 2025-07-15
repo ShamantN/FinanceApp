@@ -184,7 +184,7 @@ class _LoginState extends State<Login> {
           )),
           Padding(
             padding: const EdgeInsets.only(
-                top: 80, bottom: 100, left: 650, right: 650),
+                top: 80, bottom: 50, left: 580, right: 580),
             child: Column(
               children: [
                 Container(
