@@ -17,7 +17,7 @@ class _LoginState extends State<Login> {
   bool showPwd = true;
   bool hovering = false;
   bool _isLogin = false;
-  double buttonWidth = 250;
+  double buttonWidth = 200;
   double buttonPad = 5;
   String? errMsg = '';
   bool showIndicator = false;
@@ -69,8 +69,8 @@ class _LoginState extends State<Login> {
 
       if (FirebaseAuth.instance.currentUser != null) {
         await uploadToFirestore(userCreds, userName, userEmail);
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => SelectOption()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => SelectOption()));
       }
       print(userCreds);
     } on FirebaseAuthException catch (e) {
@@ -127,7 +127,7 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 150,
+        toolbarHeight: 120,
         elevation: 10,
         shadowColor: Colors.black,
         backgroundColor: Colors.green,
@@ -153,20 +153,21 @@ class _LoginState extends State<Login> {
                   style: TextStyle(
                       fontFamily: 'Ariel',
                       fontWeight: FontWeight.bold,
-                      fontSize: 32),
+                      fontSize: 25),
                 ),
                 Text(
                   "FOUNDATION",
                   style: TextStyle(
                       fontFamily: 'Helvetica',
                       fontWeight: FontWeight.bold,
-                      fontSize: 32),
+                      fontSize: 25),
                 )
               ],
             ),
           ],
         ),
       ),
+      resizeToAvoidBottomInset: false,
       body: Center(
         child: Stack(children: [
           Positioned.fill(
@@ -184,7 +185,7 @@ class _LoginState extends State<Login> {
           )),
           Padding(
             padding: const EdgeInsets.only(
-                top: 80, bottom: 50, left: 580, right: 580),
+                top: 20, bottom: 100, left: 50, right: 50),
             child: Column(
               children: [
                 Container(
@@ -265,7 +266,7 @@ class _LoginState extends State<Login> {
                                   style: TextStyle(
                                     fontFamily: "Helvetica",
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 40,
+                                    fontSize: 23,
                                   ),
                                 )
                               : Text(
@@ -273,7 +274,7 @@ class _LoginState extends State<Login> {
                                   style: TextStyle(
                                     fontFamily: "Helvetica",
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 40,
+                                    fontSize: 22,
                                   ),
                                 ),
                           const SizedBox(
@@ -287,7 +288,7 @@ class _LoginState extends State<Login> {
                                 if (!_isLogin)
                                   Center(
                                     child: SizedBox(
-                                      width: 500,
+                                      width: 310,
                                       child: TextFormField(
                                         focusNode: _nameFocus,
                                         textInputAction: TextInputAction.next,
@@ -315,7 +316,7 @@ class _LoginState extends State<Login> {
                                                     width: 2)),
                                             icon: Icon(
                                               Icons.person,
-                                              size: 40,
+                                              size: 30,
                                               color: Colors.black,
                                             ),
                                             labelText: "Name",
@@ -337,7 +338,7 @@ class _LoginState extends State<Login> {
                                 ),
                                 Center(
                                   child: SizedBox(
-                                    width: 500,
+                                    width: 310,
                                     child: TextFormField(
                                       focusNode: _emailFocus,
                                       textInputAction: TextInputAction.next,
@@ -366,7 +367,7 @@ class _LoginState extends State<Login> {
                                                   width: 2)),
                                           icon: Icon(
                                             Icons.mail,
-                                            size: 40,
+                                            size: 30,
                                             color: Colors.black,
                                           ),
                                           labelText: "E-Mail Address",
@@ -388,7 +389,7 @@ class _LoginState extends State<Login> {
                                 ),
                                 Center(
                                   child: SizedBox(
-                                    width: 500,
+                                    width: 310,
                                     child: TextFormField(
                                       focusNode: _pwdFocus,
                                       textInputAction: TextInputAction.done,
@@ -432,7 +433,7 @@ class _LoginState extends State<Login> {
                                                   width: 2)),
                                           icon: Icon(
                                             Icons.password_sharp,
-                                            size: 40,
+                                            size: 30,
                                             color: Colors.black,
                                           ),
                                           labelText: _isLogin

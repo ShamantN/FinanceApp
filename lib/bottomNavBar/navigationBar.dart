@@ -22,8 +22,8 @@ class CustomNavBar extends StatelessWidget {
         break;
 
       case 2:
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const Notifications()));
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (_) => const NotificationsPage()));
         break;
 
       case 3:
@@ -35,35 +35,37 @@ class CustomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 74,
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(48), topRight: Radius.circular(48)),
       child: BottomNavigationBar(
         type: BottomNavigationBarType.shifting,
         showUnselectedLabels: true,
-        unselectedItemColor: Colors.white70,
-        selectedFontSize: 18,
+        unselectedItemColor: Colors.grey[800],
+        selectedFontSize: 16,
+        unselectedFontSize: 11,
         selectedIconTheme: const IconThemeData(size: 30),
         fixedColor: Colors.black,
         currentIndex: navIndex,
         onTap: (index) => _onTap(context, index),
         items: [
-          BottomNavigationBarItem(
-            backgroundColor: Colors.grey[500],
-            icon: const Icon(
+          const BottomNavigationBarItem(
+            backgroundColor: Color(0xFFE5F9EE),
+            icon: Icon(
               Icons.home_rounded,
             ),
             label: 'Home',
           ),
           const BottomNavigationBarItem(
-              backgroundColor: Colors.grey,
+              backgroundColor: Color(0xFFE5F9EE),
               icon: Icon(Icons.article),
               label: 'Documents'),
           const BottomNavigationBarItem(
-              backgroundColor: Colors.grey,
+              backgroundColor: Color(0xFFE5F9EE),
               icon: Icon(Icons.notification_add),
               label: 'Notifications'),
           const BottomNavigationBarItem(
-              backgroundColor: Colors.grey,
+              backgroundColor: Color(0xFFE5F9EE),
               icon: Icon(Icons.person),
               label: 'Profile'),
         ],

@@ -1,5 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:revesion/hiveFunctions.dart';
+import 'package:revesion/hive_box_const.dart';
+import 'package:revesion/models/altInvestModel.dart';
 
 class AlternateInvestmentDetails extends StatefulWidget {
   const AlternateInvestmentDetails({super.key});
@@ -11,907 +17,1195 @@ class AlternateInvestmentDetails extends StatefulWidget {
 
 class _AlternateInvestmentDetailsState
     extends State<AlternateInvestmentDetails> {
-  final _formKey = GlobalKey<FormState>();
-
-  final _nameOfAMCCtrl = TextEditingController();
-  final _registeredEmailCtrl = TextEditingController();
-  final _folioCtrl = TextEditingController();
-  final _nomineeCtrl = TextEditingController();
-  final _investmentAmountCtrl = TextEditingController();
-  final _currentValueCtrl = TextEditingController();
-  final _purchaseDateCtrl = TextEditingController();
-  final _maturityDateCtrl = TextEditingController();
-  final _expectedReturnCtrl = TextEditingController();
-  final _remarksCtrl = TextEditingController();
+  final List<AlternateInvestmentForm> _forms = [];
+  final PageController _pageController = PageController(viewportFraction: 0.9);
+  late final Box<AltInvestModel> _aiBox;
 
   final List<String> fundTypes = [
-    'Alternative Investment Fund (AIF)',
-    'Mutual Fund',
-    'Portfolio Management Service (PMS)',
-    'Real Estate Investment Trust (REIT)',
-    'Infrastructure Investment Trust (InvIT)',
-    'Commodity Funds',
-    'Hedge Funds',
-    'Private Equity',
-    'Venture Capital',
-    'Angel Investing',
-    'Cryptocurrency',
-    'Gold ETF',
-    'PPF (Public Provident Fund)',
-    'SSY (Sukanya Samriddhi Yojana)',
-    'NSC (National Savings Certificate)',
-    'ELSS (Equity Linked Savings Scheme)',
-    'ULIPs (Unit Linked Insurance Plans)',
-    'Other',
+    'ai_fund_aif'.tr(),
+    'ai_fund_mutual'.tr(),
+    'ai_fund_pms'.tr(),
+    'ai_fund_reit'.tr(),
+    'ai_fund_invit'.tr(),
+    'ai_fund_commodity'.tr(),
+    'ai_fund_hedge'.tr(),
+    'ai_fund_private_equity'.tr(),
+    'ai_fund_venture'.tr(),
+    'ai_fund_angel'.tr(),
+    'ai_fund_crypto'.tr(),
+    'ai_fund_gold_etf'.tr(),
+    'ai_fund_ppf'.tr(),
+    'ai_fund_ssy'.tr(),
+    'ai_fund_nsc'.tr(),
+    'ai_fund_elss'.tr(),
+    'ai_fund_ulip'.tr(),
+    'ai_fund_other'.tr(),
   ];
 
   final List<String> amcNames = [
-    'HDFC Asset Management',
-    'ICICI Prudential Asset Management',
-    'SBI Funds Management',
-    'Axis Asset Management',
-    'Kotak Mahindra Asset Management',
-    'Birla Sun Life Asset Management',
-    'Franklin Templeton Asset Management',
-    'DSP Investment Managers',
-    'Nippon India Asset Management',
-    'UTI Asset Management',
-    'Tata Asset Management',
-    'Invesco Asset Management',
-    'L&T Investment Management',
-    'Mirae Asset Global Investments',
-    'Motilal Oswal Asset Management',
-    'Reliance Asset Management',
-    'PGIM India Asset Management',
-    'Mahindra Manulife Asset Management',
-    'Canara Robeco Asset Management',
-    'HSBC Asset Management',
-    'Government of India (for PPF/SSY/NSC)',
-    'Post Office (for PPF/SSY/NSC)',
-    'Other',
+    'ai_amc_hdfc'.tr(),
+    'ai_amc_icici'.tr(),
+    'ai_amc_sbi'.tr(),
+    'ai_amc_axis'.tr(),
+    'ai_amc_kotak'.tr(),
+    'ai_amc_birla'.tr(),
+    'ai_amc_franklin'.tr(),
+    'ai_amc_dsp'.tr(),
+    'ai_amc_nippon'.tr(),
+    'ai_amc_uti'.tr(),
+    'ai_amc_tata'.tr(),
+    'ai_amc_invesco'.tr(),
+    'ai_amc_lnt'.tr(),
+    'ai_amc_mirae'.tr(),
+    'ai_amc_motilal'.tr(),
+    'ai_amc_reliance'.tr(),
+    'ai_amc_pgim'.tr(),
+    'ai_amc_mahindra'.tr(),
+    'ai_amc_canara'.tr(),
+    'ai_amc_hsbc'.tr(),
+    'ai_amc_gov_india'.tr(),
+    'ai_amc_post_office'.tr(),
+    'ai_amc_other'.tr(),
   ];
 
   final List<String> investmentCategories = [
-    'Equity Oriented',
-    'Debt Oriented',
-    'Hybrid/Balanced',
-    'Gold/Commodity',
-    'Real Estate',
-    'Infrastructure',
-    'Alternative Assets',
-    'International',
-    'Tax Saving',
-    'Government Schemes',
+    'ai_category_equity'.tr(),
+    'ai_category_debt'.tr(),
+    'ai_category_hybrid'.tr(),
+    'ai_category_gold'.tr(),
+    'ai_category_real_estate'.tr(),
+    'ai_category_infrastructure'.tr(),
+    'ai_category_alternative'.tr(),
+    'ai_category_international'.tr(),
+    'ai_category_tax_saving'.tr(),
+    'ai_category_government'.tr(),
   ];
 
   final List<String> riskLevels = [
-    'Very Low Risk',
-    'Low Risk',
-    'Moderate Risk',
-    'High Risk',
-    'Very High Risk',
+    'ai_risk_very_low'.tr(),
+    'ai_risk_low'.tr(),
+    'ai_risk_moderate'.tr(),
+    'ai_risk_high'.tr(),
+    'ai_risk_very_high'.tr(),
   ];
 
-  String? selectedFundType;
-  String? selectedAMC;
-  String? selectedCategory;
-  String? selectedRiskLevel;
-  bool _isSubmitting = false;
+  @override
+  void initState() {
+    super.initState();
+    _openAndLoadBox();
+  }
+
+  Future<void> _openAndLoadBox() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ai_no_user'.tr())),
+      );
+      return;
+    }
+    final uid = user.uid;
+    _aiBox = await HiveFunctions.openBox<AltInvestModel>(aiBoxWithUid(uid));
+    for (var key in _aiBox.keys) {
+      var data = _aiBox.get(key);
+      var form = AlternateInvestmentForm(
+          key, fundTypes, amcNames, investmentCategories, riskLevels);
+      form.loadData(data!);
+      _forms.add(form);
+    }
+    setState(() {});
+  }
+
+  void _addInvestment() {
+    setState(() {
+      int newKey = _forms.isEmpty
+          ? 0
+          : _forms.map((f) => f.key).reduce((a, b) => a > b ? a : b) + 1;
+      var newForm = AlternateInvestmentForm(
+          newKey, fundTypes, amcNames, investmentCategories, riskLevels);
+      _forms.add(newForm);
+    });
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _pageController.animateToPage(
+        _forms.length - 1,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _removeInvestment(int index) {
+    setState(() {
+      _aiBox.delete(_forms[index].key);
+      _forms.removeAt(index);
+    });
+    if (_forms.isNotEmpty) {
+      int newPage = (_pageController.page!.round() >= _forms.length)
+          ? _forms.length - 1
+          : _pageController.page!.round();
+      _pageController.animateToPage(
+        newPage,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _saveInvestment(int index) {
+    final form = _forms[index];
+    if (form.formKey.currentState!.validate()) {
+      final data = form.toAltInvestModel();
+      try {
+        _aiBox.put(form.key, data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ai_save_success'.tr())),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ai_save_error'.tr(args: [e.toString()]))),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('ai_validation_error'.tr()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
-    _nameOfAMCCtrl.dispose();
-    _registeredEmailCtrl.dispose();
-    _folioCtrl.dispose();
-    _nomineeCtrl.dispose();
-    _investmentAmountCtrl.dispose();
-    _currentValueCtrl.dispose();
-    _purchaseDateCtrl.dispose();
-    _maturityDateCtrl.dispose();
-    _expectedReturnCtrl.dispose();
-    _remarksCtrl.dispose();
+    for (var form in _forms) {
+      form.dispose();
+    }
+    _pageController.dispose();
+    _aiBox.close();
     super.dispose();
-  }
-
-  Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      // Simulate API call or database save
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Create data object
-      final investmentData = {
-        'amc_name': selectedAMC == 'Other' ? _nameOfAMCCtrl.text : selectedAMC,
-        'registered_email': _registeredEmailCtrl.text,
-        'folio_number': _folioCtrl.text,
-        'fund_type': selectedFundType,
-        'investment_category': selectedCategory,
-        'risk_level': selectedRiskLevel,
-        'nominee_name': _nomineeCtrl.text,
-        'investment_amount': _investmentAmountCtrl.text,
-        'current_value': _currentValueCtrl.text,
-        'purchase_date': _purchaseDateCtrl.text,
-        'maturity_date':
-            _maturityDateCtrl.text.isEmpty ? null : _maturityDateCtrl.text,
-        'expected_return': _expectedReturnCtrl.text,
-        'remarks': _remarksCtrl.text.isEmpty ? null : _remarksCtrl.text,
-        'created_at': DateTime.now().toIso8601String(),
-      };
-
-      // TODO: Replace with actual API call or database save
-      print('Investment Data: $investmentData');
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Alternate Investment Details saved successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-
-        // Clear form after successful submission
-        _clearForm();
-      }
-    } catch (e) {
-      // Show error message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving data: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
-    }
-  }
-
-  void _clearForm() {
-    _nameOfAMCCtrl.clear();
-    _registeredEmailCtrl.clear();
-    _folioCtrl.clear();
-    _nomineeCtrl.clear();
-    _investmentAmountCtrl.clear();
-    _currentValueCtrl.clear();
-    _purchaseDateCtrl.clear();
-    _maturityDateCtrl.clear();
-    _expectedReturnCtrl.clear();
-    _remarksCtrl.clear();
-
-    setState(() {
-      selectedFundType = null;
-      selectedAMC = null;
-      selectedCategory = null;
-      selectedRiskLevel = null;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [
-          Color.fromARGB(255, 154, 197, 232),
-          Color.fromARGB(255, 115, 149, 169),
-          Color.fromARGB(255, 103, 149, 209),
-        ], stops: [
-          0.0,
-          0.5,
-          1.0,
-        ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+        gradient: LinearGradient(
+          colors: [
+            Color.fromARGB(255, 154, 197, 232),
+            Color.fromARGB(255, 115, 149, 169),
+            Color.fromARGB(255, 103, 149, 209),
+          ],
+          stops: [0.0, 0.5, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
+          elevation: 10,
           shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16))),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+          ),
           toolbarHeight: 80,
           centerTitle: true,
-          title: const Text(
-            "Alternate Investment Details",
-            style: TextStyle(
-                fontFamily: 'Helvetica',
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-                color: Colors.white),
+          title: Text(
+            'ai_title'.tr(),
+            style: const TextStyle(
+              fontFamily: 'Helvetica',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.white,
+            ),
           ),
           leading: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-                size: 40,
-              )),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
           backgroundColor: Colors.blue,
         ),
-        body: ListView(
+        body: Column(
           children: [
             const SizedBox(height: 20),
-            Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: _forms.isEmpty
+                  ? Center(
+                      child: Text('ai_no_investments'.tr(),
+                          style: const TextStyle(color: Colors.white)))
+                  : PageView.builder(
+                      controller: _pageController,
+                      itemCount: _forms.length,
+                      itemBuilder: (context, index) {
+                        return _buildInvestmentCard(index);
+                      },
+                    ),
+            ),
+            const SizedBox(height: 80),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _addInvestment,
+          child: const Icon(Icons.add),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInvestmentCard(int index) {
+    final form = _forms[index];
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color.fromARGB(255, 154, 197, 232),
+            Color.fromARGB(255, 115, 149, 169),
+            Color.fromARGB(255, 103, 149, 209),
+          ],
+          stops: [0.0, 0.5, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            offset: const Offset(0, 4),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              color: Colors.transparent,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6),
-                    child: Text(
-                      "Name of AMC",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                  Text(
+                    'Investment ${index + 1}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontFamily: 'Helvetica',
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 20),
-                    child: DropdownButtonFormField(
-                      hint: const Text(
-                        "Select AMC Name",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      dropdownColor: Colors.lightBlue,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      iconEnabledColor: Colors.white,
-                      value: selectedAMC,
-                      items: amcNames
-                          .map((amc) => DropdownMenuItem<String>(
-                                value: amc,
-                                child: Text(
-                                  amc,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (newVal) {
-                        setState(() {
-                          selectedAMC = newVal.toString();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white70, width: 2)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white, width: 2)),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select AMC name';
-                        }
-                        return null;
-                      },
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.delete,
+                        color: Colors.redAccent, size: 30),
+                    onPressed: () => _removeInvestment(index),
                   ),
-                  // Custom AMC name field if "Other" is selected
-                  if (selectedAMC == 'Other')
-                    Padding(
-                      padding:
-                          const EdgeInsets.only(left: 20, right: 20, top: 10),
-                      child: TextFormField(
-                        cursorColor: Colors.white,
-                        controller: _nameOfAMCCtrl,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                            suffixIcon:
-                                const Icon(Icons.business, color: Colors.white),
-                            floatingLabelBehavior: FloatingLabelBehavior.never,
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                    color: Colors.white, width: 2)),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                    color: Colors.white70, width: 2)),
-                            labelText: 'Enter Custom AMC Name',
-                            labelStyle: const TextStyle(color: Colors.white70)),
-                        validator: (value) {
-                          if (selectedAMC == 'Other' &&
-                              (value == null || value.isEmpty)) {
-                            return 'Please enter AMC name';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Registered Email ID",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      controller: _registeredEmailCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                          suffixIcon:
-                              const Icon(Icons.email, color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Registered Email ID',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter registered email ID';
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
-                          return 'Please enter valid email address';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Folio Number",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      controller: _folioCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                          suffixIcon:
-                              const Icon(Icons.folder, color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Folio Number',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter folio number';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Type of Fund",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 20),
-                    child: DropdownButtonFormField(
-                      hint: const Text(
-                        "Select Fund Type",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      dropdownColor: Colors.lightBlue,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      iconEnabledColor: Colors.white,
-                      value: selectedFundType,
-                      items: fundTypes
-                          .map((type) => DropdownMenuItem<String>(
-                                value: type,
-                                child: Text(
-                                  type,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (newVal) {
-                        setState(() {
-                          selectedFundType = newVal.toString();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white70, width: 2)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white, width: 2)),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select fund type';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Investment Category",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 20),
-                    child: DropdownButtonFormField(
-                      hint: const Text(
-                        "Select Investment Category",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      dropdownColor: Colors.lightBlue,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      iconEnabledColor: Colors.white,
-                      value: selectedCategory,
-                      items: investmentCategories
-                          .map((category) => DropdownMenuItem<String>(
-                                value: category,
-                                child: Text(
-                                  category,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (newVal) {
-                        setState(() {
-                          selectedCategory = newVal.toString();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white70, width: 2)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white, width: 2)),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select investment category';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Risk Level",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 20),
-                    child: DropdownButtonFormField(
-                      hint: const Text(
-                        "Select Risk Level",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      dropdownColor: Colors.lightBlue,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      iconEnabledColor: Colors.white,
-                      value: selectedRiskLevel,
-                      items: riskLevels
-                          .map((risk) => DropdownMenuItem<String>(
-                                value: risk,
-                                child: Text(
-                                  risk,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (newVal) {
-                        setState(() {
-                          selectedRiskLevel = newVal.toString();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white70, width: 2)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: Colors.white, width: 2)),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select risk level';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Nominee Name",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: const TextStyle(color: Colors.white),
-                      controller: _nomineeCtrl,
-                      decoration: InputDecoration(
-                          suffixIcon: const Icon(Icons.person_outline,
-                              color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Nominee Name',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter nominee name';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Investment Amount",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: const TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.number,
-                      controller: _investmentAmountCtrl,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                          suffixIcon: const Icon(Icons.currency_rupee,
-                              color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Investment Amount (₹)',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter investment amount';
-                        }
-                        if (int.tryParse(value) == null) {
-                          return 'Please enter valid amount';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Current Value",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: const TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.number,
-                      controller: _currentValueCtrl,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                          suffixIcon: const Icon(Icons.trending_up,
-                              color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Current Value (₹)',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter current value';
-                        }
-                        if (int.tryParse(value) == null) {
-                          return 'Please enter valid value';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Purchase Date",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: const TextStyle(color: Colors.white),
-                      controller: _purchaseDateCtrl,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                          suffixIcon: const Icon(Icons.calendar_today,
-                              color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Select Purchase Date',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      onTap: () async {
-                        DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime(1900),
-                          lastDate: DateTime.now(),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _purchaseDateCtrl.text =
-                                "${picked.day}/${picked.month}/${picked.year}";
-                          });
-                        }
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select purchase date';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Maturity Date (if applicable)",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: const TextStyle(color: Colors.white),
-                      controller: _maturityDateCtrl,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                          suffixIcon:
-                              const Icon(Icons.event, color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Select Maturity Date (Optional)',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      onTap: () async {
-                        DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate:
-                              DateTime.now().add(const Duration(days: 365)),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _maturityDateCtrl.text =
-                                "${picked.day}/${picked.month}/${picked.year}";
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Expected Return (%)",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: const TextStyle(color: Colors.white),
-                      keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
-                      controller: _expectedReturnCtrl,
-                      decoration: InputDecoration(
-                          suffixIcon:
-                              const Icon(Icons.percent, color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Expected Return (%)',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter expected return';
-                        }
-                        if (double.tryParse(value) == null) {
-                          return 'Please enter a valid percentage';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Remarks (Optional)",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: const TextStyle(color: Colors.white),
-                      controller: _remarksCtrl,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                          suffixIcon:
-                              const Icon(Icons.notes, color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: Colors.white70, width: 2)),
-                          labelText: 'Enter Remarks (if any)',
-                          labelStyle: const TextStyle(color: Colors.white70)),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: _isSubmitting ? null : _submitForm,
-                      icon: _isSubmitting
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.save),
-                      label:
-                          Text(_isSubmitting ? 'Saving...' : 'Save Investment'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        textStyle: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
                 ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Form(
+                    key: form.formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_amc_name'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: form.selectedAMC,
+                            onChanged: (newVal) {
+                              setState(() {
+                                form.selectedAMC = newVal;
+                              });
+                            },
+                            items: form.amcNames.map((amc) {
+                              return DropdownMenuItem<String>(
+                                value: amc,
+                                child: Text(amc,
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              );
+                            }).toList(),
+                            style: const TextStyle(color: Colors.white),
+                            dropdownColor:
+                                const Color.fromARGB(255, 115, 149, 169),
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(Icons.business,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_amc_name_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_amc_name_error'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        if (form.selectedAMC == 'ai_amc_other'.tr()) ...[
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 3, bottom: 6),
+                            child: Text(
+                              'ai_custom_amc_name'.tr(),
+                              style: const TextStyle(
+                                fontFamily: 'Helvetica',
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 0),
+                            child: TextFormField(
+                              cursorColor: Colors.white,
+                              controller: form.nameOfAMCCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                suffixIcon: const Icon(Icons.business,
+                                    color: Colors.white),
+                                floatingLabelBehavior:
+                                    FloatingLabelBehavior.never,
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      color: Colors.white, width: 2),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      color: Colors.white70, width: 2),
+                                ),
+                                labelText: 'ai_custom_amc_name_hint'.tr(),
+                                labelStyle:
+                                    const TextStyle(color: Colors.white70),
+                              ),
+                              validator: (value) {
+                                if (form.selectedAMC == 'ai_amc_other'.tr() &&
+                                    (value == null || value.isEmpty)) {
+                                  return 'ai_custom_amc_name_error'.tr();
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_registered_email'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.registeredEmailCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              suffixIcon:
+                                  const Icon(Icons.email, color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_registered_email_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_registered_email_error'.tr();
+                              }
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                  .hasMatch(value)) {
+                                return 'ai_registered_email_invalid'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_folio_number'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.folioCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              suffixIcon:
+                                  const Icon(Icons.folder, color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_folio_number_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_folio_number_error'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_fund_type'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: form.selectedFundType,
+                            onChanged: (newVal) {
+                              setState(() {
+                                form.selectedFundType = newVal;
+                              });
+                            },
+                            items: form.fundTypes.map((type) {
+                              return DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(type,
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              );
+                            }).toList(),
+                            style: const TextStyle(color: Colors.white),
+                            dropdownColor:
+                                const Color.fromARGB(255, 115, 149, 169),
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(
+                                  Icons.account_balance_wallet,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_fund_type_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_fund_type_error'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_investment_category'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: form.selectedCategory,
+                            onChanged: (newVal) {
+                              setState(() {
+                                form.selectedCategory = newVal;
+                              });
+                            },
+                            items: form.investmentCategories.map((category) {
+                              return DropdownMenuItem<String>(
+                                value: category,
+                                child: Text(category,
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              );
+                            }).toList(),
+                            style: const TextStyle(color: Colors.white),
+                            dropdownColor:
+                                const Color.fromARGB(255, 115, 149, 169),
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(Icons.category,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_investment_category_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_investment_category_error'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_risk_level'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: DropdownButtonFormField<String>(
+                            value: form.selectedRiskLevel,
+                            onChanged: (newVal) {
+                              setState(() {
+                                form.selectedRiskLevel = newVal;
+                              });
+                            },
+                            items: form.riskLevels.map((risk) {
+                              return DropdownMenuItem<String>(
+                                value: risk,
+                                child: Text(risk,
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              );
+                            }).toList(),
+                            style: const TextStyle(color: Colors.white),
+                            dropdownColor:
+                                const Color.fromARGB(255, 115, 149, 169),
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(Icons.warning,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_risk_level_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_risk_level_error'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_nominee_name'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.nomineeCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(Icons.person_outline,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_nominee_name_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_nominee_name_error'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_investment_amount'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.investmentAmountCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(Icons.currency_rupee,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_investment_amount_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_investment_amount_error'.tr();
+                              }
+                              if (int.tryParse(value) == null) {
+                                return 'ai_investment_amount_invalid'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_current_value'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.currentValueCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(Icons.trending_up,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_current_value_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_current_value_error'.tr();
+                              }
+                              if (int.tryParse(value) == null) {
+                                return 'ai_current_value_invalid'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_purchase_date'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.purchaseDateCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(Icons.calendar_today,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_purchase_date_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            onTap: () async {
+                              DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(1900),
+                                lastDate: DateTime.now(),
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  form.purchaseDateCtrl.text =
+                                      "${picked.day}/${picked.month}/${picked.year}";
+                                });
+                              }
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_purchase_date_error'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_maturity_date'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.maturityDateCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              suffixIcon:
+                                  const Icon(Icons.event, color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_maturity_date_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            onTap: () async {
+                              DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now()
+                                    .add(const Duration(days: 365)),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  form.maturityDateCtrl.text =
+                                      "${picked.day}/${picked.month}/${picked.year}";
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_expected_return'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.expectedReturnCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            decoration: InputDecoration(
+                              suffixIcon: const Icon(Icons.percent,
+                                  color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_expected_return_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'ai_expected_return_error'.tr();
+                              }
+                              if (double.tryParse(value) == null) {
+                                return 'ai_expected_return_invalid'.tr();
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3, bottom: 6),
+                          child: Text(
+                            'ai_remarks'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica',
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: TextFormField(
+                            cursorColor: Colors.white,
+                            controller: form.remarksCtrl,
+                            style: const TextStyle(color: Colors.white),
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              suffixIcon:
+                                  const Icon(Icons.notes, color: Colors.white),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white, width: 2),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(
+                                    color: Colors.white70, width: 2),
+                              ),
+                              labelText: 'ai_remarks_hint'.tr(),
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                form.clear();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.blue,
+                              ),
+                              child: Text('ai_clear_form'.tr()),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => _saveInvestment(index),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.blue,
+                              ),
+                              child: Text('ai_save'.tr()),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+class AlternateInvestmentForm {
+  final int key;
+  final List<String> fundTypes;
+  final List<String> amcNames;
+  final List<String> investmentCategories;
+  final List<String> riskLevels;
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final TextEditingController nameOfAMCCtrl = TextEditingController();
+  final TextEditingController registeredEmailCtrl = TextEditingController();
+  final TextEditingController folioCtrl = TextEditingController();
+  final TextEditingController nomineeCtrl = TextEditingController();
+  final TextEditingController investmentAmountCtrl = TextEditingController();
+  final TextEditingController currentValueCtrl = TextEditingController();
+  final TextEditingController purchaseDateCtrl = TextEditingController();
+  final TextEditingController maturityDateCtrl = TextEditingController();
+  final TextEditingController expectedReturnCtrl = TextEditingController();
+  final TextEditingController remarksCtrl = TextEditingController();
+
+  String? selectedFundType;
+  String? selectedAMC;
+  String? selectedCategory;
+  String? selectedRiskLevel;
+
+  AlternateInvestmentForm(this.key, this.fundTypes, this.amcNames,
+      this.investmentCategories, this.riskLevels);
+
+  void loadData(AltInvestModel data) {
+    nameOfAMCCtrl.text = data.nameOfAMC;
+    registeredEmailCtrl.text = data.registeredEmail;
+    folioCtrl.text = data.folio;
+    nomineeCtrl.text = data.nominee;
+    investmentAmountCtrl.text = data.investmentAmt.toString();
+    currentValueCtrl.text = data.currentValue.toString();
+    purchaseDateCtrl.text =
+        "${data.purchaseDate.day}/${data.purchaseDate.month}/${data.purchaseDate.year}";
+    maturityDateCtrl.text = data.maturityDate != null
+        ? "${data.maturityDate!.day}/${data.maturityDate!.month}/${data.maturityDate!.year}"
+        : "";
+    expectedReturnCtrl.text = data.expectedReturn.toString();
+    remarksCtrl.text = data.remarks;
+    selectedFundType = fundTypes.contains(data.fundType) ? data.fundType : null;
+    selectedAMC = amcNames.contains(data.nameOfAMC)
+        ? data.nameOfAMC
+        : 'ai_amc_other'.tr();
+    selectedCategory =
+        investmentCategories.contains(data.category) ? data.category : null;
+    selectedRiskLevel =
+        riskLevels.contains(data.riskLevel) ? data.riskLevel : null;
+  }
+
+  AltInvestModel toAltInvestModel() {
+    final purchaseDateParts = purchaseDateCtrl.text.split('/');
+    final maturityDateParts = maturityDateCtrl.text.isNotEmpty
+        ? maturityDateCtrl.text.split('/')
+        : null;
+    return AltInvestModel(
+      nameOfAMC: selectedAMC == 'ai_amc_other'.tr()
+          ? nameOfAMCCtrl.text
+          : selectedAMC!,
+      registeredEmail: registeredEmailCtrl.text,
+      folio: folioCtrl.text,
+      nominee: nomineeCtrl.text,
+      investmentAmt: int.parse(investmentAmountCtrl.text),
+      currentValue: int.parse(currentValueCtrl.text),
+      purchaseDate: DateTime(
+        int.parse(purchaseDateParts[2]),
+        int.parse(purchaseDateParts[1]),
+        int.parse(purchaseDateParts[0]),
+      ),
+      maturityDate: maturityDateParts != null
+          ? DateTime(
+              int.parse(maturityDateParts[2]),
+              int.parse(maturityDateParts[1]),
+              int.parse(maturityDateParts[0]),
+            )
+          : DateTime.now(),
+      expectedReturn: double.parse(expectedReturnCtrl.text).toInt(),
+      remarks: remarksCtrl.text.isEmpty ? '' : remarksCtrl.text,
+      fundType: selectedFundType!,
+      category: selectedCategory!,
+      riskLevel: selectedRiskLevel!,
+    );
+  }
+
+  void clear() {
+    nameOfAMCCtrl.clear();
+    registeredEmailCtrl.clear();
+    folioCtrl.clear();
+    nomineeCtrl.clear();
+    investmentAmountCtrl.clear();
+    currentValueCtrl.clear();
+    purchaseDateCtrl.clear();
+    maturityDateCtrl.clear();
+    expectedReturnCtrl.clear();
+    remarksCtrl.clear();
+    selectedFundType = null;
+    selectedAMC = null;
+    selectedCategory = null;
+    selectedRiskLevel = null;
+  }
+
+  void dispose() {
+    nameOfAMCCtrl.dispose();
+    registeredEmailCtrl.dispose();
+    folioCtrl.dispose();
+    nomineeCtrl.dispose();
+    investmentAmountCtrl.dispose();
+    currentValueCtrl.dispose();
+    purchaseDateCtrl.dispose();
+    maturityDateCtrl.dispose();
+    expectedReturnCtrl.dispose();
+    remarksCtrl.dispose();
   }
 }
