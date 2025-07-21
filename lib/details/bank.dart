@@ -7,7 +7,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:dob_input_field/dob_input_field.dart';
 import 'package:revesion/hiveFunctions.dart';
 import 'package:revesion/hive_box_const.dart';
-import 'package:revesion/models/bankModel.dart';
 
 class BankAccount {
   final TextEditingController bankName = TextEditingController();

@@ -1,10 +1,11 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, unused_local_variable, avoid_print
+// ignore_for_file: unused_local_variable
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:revesion/mainArea/selection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -14,6 +15,8 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  late Locale _pageLocale;
+
   bool showPwd = true;
   bool hovering = false;
   bool _isLogin = false;
@@ -69,15 +72,12 @@ class _LoginState extends State<Login> {
 
       if (FirebaseAuth.instance.currentUser != null) {
         await uploadToFirestore(userCreds, userName, userEmail);
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => SelectOption()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const SelectOption()));
       }
-      print(userCreds);
     } on FirebaseAuthException catch (e) {
-      // e is of type firebaseauthexception
       errMsg = e.message;
       isError = true;
-      print(errMsg);
     }
     setState(() {
       showIndicator = false;
@@ -112,11 +112,9 @@ class _LoginState extends State<Login> {
     try {
       final userCreds = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: userEmail, password: userPwd);
-      print(userCreds);
     } on FirebaseAuthException catch (e) {
       isError = true;
       errMsg = e.message;
-      print(e.message);
     }
     setState(() {
       showIndicator = false;
@@ -127,12 +125,27 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          const SizedBox(
+            width: 56,
+          )
+        ],
+        leading: IconButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              final newLoc = (context.locale.languageCode == 'en'
+                  ? const Locale('kn')
+                  : const Locale('en'));
+              context.setLocale(newLoc);
+            },
+            icon: const Icon(Icons.language)),
+        leadingWidth: 56,
         toolbarHeight: 120,
         elevation: 10,
         shadowColor: Colors.black,
         backgroundColor: Colors.green,
         automaticallyImplyLeading: false,
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(16),
                 bottomRight: Radius.circular(16))),
@@ -149,15 +162,15 @@ class _LoginState extends State<Login> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  "PUTTAINNAIH",
-                  style: TextStyle(
+                  "login_appbar_title".tr(),
+                  style: const TextStyle(
                       fontFamily: 'Ariel',
                       fontWeight: FontWeight.bold,
                       fontSize: 25),
                 ),
                 Text(
-                  "FOUNDATION",
-                  style: TextStyle(
+                  "login_appbar_subtitle".tr(),
+                  style: const TextStyle(
                       fontFamily: 'Helvetica',
                       fontWeight: FontWeight.bold,
                       fontSize: 25),
@@ -172,7 +185,7 @@ class _LoginState extends State<Login> {
         child: Stack(children: [
           Positioned.fill(
               child: Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
                 gradient: LinearGradient(
                     colors: [
                       Color.fromARGB(255, 236, 255, 213),
@@ -191,7 +204,7 @@ class _LoginState extends State<Login> {
                 Container(
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(32),
-                      border: Border(
+                      border: const Border(
                           top: BorderSide(color: Colors.black, width: 2),
                           bottom: BorderSide(color: Colors.black, width: 2),
                           left: BorderSide(color: Colors.black, width: 2),
@@ -202,38 +215,38 @@ class _LoginState extends State<Login> {
                       TextButton(
                         onPressed: () => setState(() => _isLogin = true),
                         style: TextButton.styleFrom(
-                          fixedSize: Size(150, 60),
-                          textStyle: TextStyle(
+                          fixedSize: const Size(150, 60),
+                          textStyle: const TextStyle(
                               fontFamily: "Helvetica",
                               fontWeight: FontWeight.normal,
                               fontSize: 20),
                           elevation: 10,
                           backgroundColor:
                               _isLogin ? Colors.green : Colors.grey[300],
-                          shape: StadiumBorder(),
+                          shape: const StadiumBorder(),
                         ),
                         child: Text(
-                          'Login',
+                          'login_button'.tr(),
                           style: TextStyle(
                               color: _isLogin ? Colors.white : Colors.black),
                         ),
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       TextButton(
                         onPressed: () => setState(() => _isLogin = false),
                         style: TextButton.styleFrom(
-                          fixedSize: Size(150, 60),
+                          fixedSize: const Size(150, 60),
                           elevation: 10,
-                          textStyle: TextStyle(
+                          textStyle: const TextStyle(
                               fontFamily: "Helvetica",
                               fontWeight: FontWeight.normal,
                               fontSize: 20),
                           backgroundColor:
                               !_isLogin ? Colors.green : Colors.grey[300],
-                          shape: StadiumBorder(),
+                          shape: const StadiumBorder(),
                         ),
                         child: Text(
-                          'Sign Up',
+                          'signup_button'.tr(),
                           style: TextStyle(
                               color: !_isLogin ? Colors.white : Colors.black),
                         ),
@@ -250,7 +263,7 @@ class _LoginState extends State<Login> {
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(32),
-                      border: Border(
+                      border: const Border(
                           top: BorderSide(color: Colors.black, width: 2),
                           bottom: BorderSide(color: Colors.black, width: 2),
                           right: BorderSide(color: Colors.black, width: 2),
@@ -262,16 +275,16 @@ class _LoginState extends State<Login> {
                         children: [
                           !_isLogin
                               ? Text(
-                                  "Hello, Create Your Account",
-                                  style: TextStyle(
+                                  "signup_title".tr(),
+                                  style: const TextStyle(
                                     fontFamily: "Helvetica",
                                     fontWeight: FontWeight.bold,
                                     fontSize: 23,
                                   ),
                                 )
                               : Text(
-                                  "Hello, Sign In To Your Account",
-                                  style: TextStyle(
+                                  "login_title".tr(),
+                                  style: const TextStyle(
                                     fontFamily: "Helvetica",
                                     fontWeight: FontWeight.bold,
                                     fontSize: 22,
@@ -305,28 +318,28 @@ class _LoginState extends State<Login> {
                                             focusedBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(32),
-                                                borderSide: BorderSide(
+                                                borderSide: const BorderSide(
                                                     color: Colors.yellowAccent,
                                                     width: 2)),
                                             enabledBorder: OutlineInputBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(32),
-                                                borderSide: BorderSide(
+                                                borderSide: const BorderSide(
                                                     color: Colors.black,
                                                     width: 2)),
-                                            icon: Icon(
+                                            icon: const Icon(
                                               Icons.person,
                                               size: 30,
                                               color: Colors.black,
                                             ),
-                                            labelText: "Name",
-                                            labelStyle: TextStyle(
+                                            labelText: "name_label".tr(),
+                                            labelStyle: const TextStyle(
                                                 fontFamily: 'Helvetica',
                                                 fontWeight: FontWeight.bold)),
                                         validator: (val) {
                                           if (val == null ||
                                               val.trim().isEmpty) {
-                                            return 'Please enter your name';
+                                            return 'name_error'.tr();
                                           }
                                           return null;
                                         },
@@ -356,28 +369,28 @@ class _LoginState extends State<Login> {
                                           focusedBorder: OutlineInputBorder(
                                               borderRadius:
                                                   BorderRadius.circular(32),
-                                              borderSide: BorderSide(
+                                              borderSide: const BorderSide(
                                                   color: Colors.yellowAccent,
                                                   width: 2)),
                                           enabledBorder: OutlineInputBorder(
                                               borderRadius:
                                                   BorderRadius.circular(32),
-                                              borderSide: BorderSide(
+                                              borderSide: const BorderSide(
                                                   color: Colors.black,
                                                   width: 2)),
-                                          icon: Icon(
+                                          icon: const Icon(
                                             Icons.mail,
                                             size: 30,
                                             color: Colors.black,
                                           ),
-                                          labelText: "E-Mail Address",
-                                          labelStyle: TextStyle(
+                                          labelText: "email_label".tr(),
+                                          labelStyle: const TextStyle(
                                               fontFamily: 'Helvetica',
                                               fontWeight: FontWeight.bold)),
                                       validator: (val) {
                                         if (val == null ||
                                             !val.contains('@gmail.com')) {
-                                          return 'Please enter a valid E-Mail address';
+                                          return 'email_error'.tr();
                                         }
                                         return null;
                                       },
@@ -422,29 +435,29 @@ class _LoginState extends State<Login> {
                                           focusedBorder: OutlineInputBorder(
                                               borderRadius:
                                                   BorderRadius.circular(32),
-                                              borderSide: BorderSide(
+                                              borderSide: const BorderSide(
                                                   color: Colors.yellowAccent,
                                                   width: 2)),
                                           enabledBorder: OutlineInputBorder(
                                               borderRadius:
                                                   BorderRadius.circular(32),
-                                              borderSide: BorderSide(
+                                              borderSide: const BorderSide(
                                                   color: Colors.black,
                                                   width: 2)),
-                                          icon: Icon(
+                                          icon: const Icon(
                                             Icons.password_sharp,
                                             size: 30,
                                             color: Colors.black,
                                           ),
                                           labelText: _isLogin
-                                              ? 'Password'
-                                              : 'Create Password',
-                                          labelStyle: TextStyle(
+                                              ? 'password_label'.tr()
+                                              : 'create_password_label'.tr(),
+                                          labelStyle: const TextStyle(
                                               fontFamily: 'Helvetica',
                                               fontWeight: FontWeight.bold)),
                                       validator: (val) {
                                         if (val == null || val.trim().isEmpty) {
-                                          return 'Please enter your password';
+                                          return 'password_error'.tr();
                                         }
                                         return null;
                                       },
@@ -455,12 +468,12 @@ class _LoginState extends State<Login> {
                                   height: 20,
                                 ),
                                 showIndicator
-                                    ? CircularProgressIndicator()
+                                    ? const CircularProgressIndicator()
                                     : Text(
                                         isError
-                                            ? (errMsg ?? 'An error has occured')
+                                            ? (errMsg ?? 'generic_error'.tr())
                                             : '',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontFamily: 'Helvetica',
                                             fontStyle: FontStyle.italic,
                                             color: Colors.red),
@@ -475,16 +488,16 @@ class _LoginState extends State<Login> {
                                       decoration: BoxDecoration(
                                           boxShadow: [
                                             BoxShadow(
-                                                color: Color.fromARGB(
+                                                color: const Color.fromARGB(
                                                         255, 45, 255, 157)
                                                     .withOpacity(0.5),
                                                 spreadRadius: 8,
                                                 blurRadius: 16,
-                                                offset: Offset(0, 0)),
+                                                offset: const Offset(0, 0)),
                                           ],
                                           borderRadius:
                                               BorderRadius.circular(32),
-                                          gradient: LinearGradient(
+                                          gradient: const LinearGradient(
                                               colors: [
                                                 Color(0xFF6A11CB),
                                                 Color(0xFF4056D4),
@@ -528,16 +541,17 @@ class _LoginState extends State<Login> {
                                               elevation: 10,
                                             ),
                                             child: !_isLogin
-                                                ? const Text(
-                                                    "Create Account",
-                                                    style: TextStyle(
+                                                ? Text(
+                                                    "create_account_button"
+                                                        .tr(),
+                                                    style: const TextStyle(
                                                         fontFamily: 'Helvetica',
                                                         fontWeight:
                                                             FontWeight.bold),
                                                   )
-                                                : const Text(
-                                                    "Sign In",
-                                                    style: TextStyle(
+                                                : Text(
+                                                    "sign_in_button".tr(),
+                                                    style: const TextStyle(
                                                         fontFamily: 'Helvetica',
                                                         fontWeight:
                                                             FontWeight.bold),

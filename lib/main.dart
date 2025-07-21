@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:revesion/firebase_options.dart';
 import 'package:revesion/hive_box_const.dart';
-import 'package:revesion/login/signin.dart';
 import 'package:revesion/models/altInvestModel.dart';
 import 'package:revesion/models/bankModel.dart';
 import 'package:revesion/models/document_model.dart';

@@ -1131,7 +1131,7 @@ class AlternateInvestmentForm {
     purchaseDateCtrl.text =
         "${data.purchaseDate.day}/${data.purchaseDate.month}/${data.purchaseDate.year}";
     maturityDateCtrl.text = data.maturityDate != null
-        ? "${data.maturityDate!.day}/${data.maturityDate!.month}/${data.maturityDate!.year}"
+        ? "${data.maturityDate.day}/${data.maturityDate.month}/${data.maturityDate.year}"
         : "";
     expectedReturnCtrl.text = data.expectedReturn.toString();
     remarksCtrl.text = data.remarks;
