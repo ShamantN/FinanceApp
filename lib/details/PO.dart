@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:revesion/hiveFunctions.dart';
 import 'package:revesion/hive_box_const.dart';
 import 'package:revesion/models/postOffice.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class PostOfficeInvestmentDetails extends StatefulWidget {
   const PostOfficeInvestmentDetails({super.key});
@@ -20,6 +24,8 @@ class _PostOfficeInvestmentDetailsState
   final List<PostOfficeForm> _forms = [];
   final PageController _pageController = PageController(viewportFraction: 0.9);
   late final Box<PostOffice> _poBox;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   final List<String> postOfficeSchemes = [
     'po_scheme_sb'.tr(),
@@ -68,6 +74,11 @@ class _PostOfficeInvestmentDetailsState
   void initState() {
     super.initState();
     _openAndLoadBox();
+    flutterLocalNotificationsPlugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
+    );
   }
 
   Future<void> _openAndLoadBox() async {
@@ -79,6 +90,9 @@ class _PostOfficeInvestmentDetailsState
           riskLevels, tenureOptions);
       form.loadData(data!);
       _forms.add(form);
+      if (data.maturityDate != null) {
+        _scheduleMaturityNotifications(data, key);
+      }
     }
     setState(() {});
   }
@@ -101,7 +115,8 @@ class _PostOfficeInvestmentDetailsState
     });
   }
 
-  void _removeInvestment(int index) {
+  void _removeInvestment(int index) async {
+    await _cancelMaturityNotifications(_forms[index].key);
     setState(() {
       _poBox.delete(_forms[index].key);
       _forms.removeAt(index);
@@ -118,15 +133,201 @@ class _PostOfficeInvestmentDetailsState
     }
   }
 
-  void _saveInvestment(int index) {
+  void _saveInvestment(int index) async {
     final form = _forms[index];
     if (form.formKey.currentState!.validate()) {
       final data = form.toPostOffice();
-      _poBox.put(form.key, data);
+      await _poBox.put(form.key, data);
+      if (data.maturityDate != null) {
+        await _scheduleMaturityNotifications(data, form.key);
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('po_save_success'.tr())),
       );
     }
+  }
+
+  Future<void> _scheduleMaturityNotifications(PostOffice data, int key) async {
+    if (data.maturityDate == null) return;
+
+    final now = tz.TZDateTime.now(tz.local);
+    final maturityDate = tz.TZDateTime.from(data.maturityDate!, tz.local);
+
+    final intervals = [
+      const Duration(days: 7),
+      const Duration(days: 2),
+      const Duration(days: 1),
+    ];
+
+    for (var i = 0; i < intervals.length; i++) {
+      final notificationTime = maturityDate.subtract(intervals[i]);
+      if (notificationTime.isAfter(now)) {
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          key * 10 + i,
+          'po_maturity_notification_title'.tr(),
+          'po_maturity_notification_body'
+              .tr()
+              .replaceAll(
+                '{0}',
+                data.postOfficeName,
+              )
+              .replaceAll(
+                '{1}',
+                data.accountNumber,
+              )
+              .replaceAll(
+                '{2}',
+                intervals[i].inDays.toString(),
+              ),
+          notificationTime,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'maturity_reminder_channel',
+              'Maturity Reminders',
+              channelDescription:
+                  'Notifications for Post Office investment maturity reminders',
+              importance: Importance.max,
+              priority: Priority.high,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          payload:
+              '${'po_maturity_notification_title'.tr()}|${'po_maturity_notification_body'.tr().replaceAll(
+                    '{0}',
+                    data.postOfficeName,
+                  ).replaceAll(
+                    '{1}',
+                    data.accountNumber,
+                  ).replaceAll(
+                    '{2}',
+                    intervals[i].inDays.toString(),
+                  )}',
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelMaturityNotifications(int key) async {
+    for (var i = 0; i < 3; i++) {
+      await flutterLocalNotificationsPlugin.cancel(key * 10 + i);
+    }
+  }
+
+  Future<void> _scheduleTestNotification() async {
+    final TextEditingController postOfficeNameCtrl = TextEditingController();
+    final TextEditingController accountNumberCtrl = TextEditingController();
+    final TextEditingController daysCtrl = TextEditingController();
+
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate == null) return;
+
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (pickedTime == null) return;
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('po_test_notification'.tr()),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: postOfficeNameCtrl,
+              decoration:
+                  InputDecoration(labelText: 'po_post_office_name'.tr()),
+            ),
+            TextField(
+              controller: accountNumberCtrl,
+              decoration: InputDecoration(labelText: 'po_account_number'.tr()),
+            ),
+            TextField(
+              controller: daysCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'po_days'.tr()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final notificationTime = tz.TZDateTime(
+                tz.local,
+                pickedDate.year,
+                pickedDate.month,
+                pickedDate.day,
+                pickedTime.hour,
+                pickedTime.minute,
+              );
+
+              if (notificationTime.isBefore(tz.TZDateTime.now(tz.local))) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('po_test_notification_error'.tr())),
+                );
+                return;
+              }
+
+              final body = 'po_maturity_notification_body'
+                  .tr()
+                  .replaceAll(
+                    '{0}',
+                    postOfficeNameCtrl.text.isEmpty
+                        ? 'Test PO'
+                        : postOfficeNameCtrl.text,
+                  )
+                  .replaceAll(
+                    '{1}',
+                    accountNumberCtrl.text.isEmpty
+                        ? '12345'
+                        : accountNumberCtrl.text,
+                  )
+                  .replaceAll(
+                    '{2}',
+                    daysCtrl.text.isEmpty ? '1' : daysCtrl.text,
+                  );
+
+              await flutterLocalNotificationsPlugin.zonedSchedule(
+                9999,
+                'po_maturity_notification_title'.tr(),
+                body,
+                notificationTime,
+                const NotificationDetails(
+                  android: AndroidNotificationDetails(
+                    'maturity_reminder_channel',
+                    'Maturity Reminders',
+                    channelDescription:
+                        'Notifications for Post Office investment maturity reminders',
+                    importance: Importance.max,
+                    priority: Priority.high,
+                  ),
+                ),
+                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                payload: '${'po_maturity_notification_title'.tr()}|$body',
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('po_test_notification_success'.tr())),
+              );
+            },
+            child: Text('save'.tr()),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -145,9 +346,9 @@ class _PostOfficeInvestmentDetailsState
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color.fromARGB(255, 255, 165, 0),
-            Color.fromARGB(255, 255, 140, 0),
-            Color.fromARGB(255, 255, 69, 0),
+            Color.fromARGB(255, 154, 197, 232),
+            Color.fromARGB(255, 115, 149, 169),
+            Color.fromARGB(255, 103, 149, 209),
           ],
           stops: [0.0, 0.5, 1.0],
           begin: Alignment.topCenter,
@@ -185,7 +386,18 @@ class _PostOfficeInvestmentDetailsState
               size: 30,
             ),
           ),
-          backgroundColor: Colors.orange,
+          actions: [
+            IconButton(
+              onPressed: _scheduleTestNotification,
+              icon: const Icon(
+                Icons.notifications_active,
+                color: Colors.white,
+                size: 30,
+              ),
+              tooltip: 'po_test_notification'.tr(),
+            ),
+          ],
+          backgroundColor: const Color(0xFF1E90FF),
         ),
         body: Column(
           children: [
@@ -193,8 +405,11 @@ class _PostOfficeInvestmentDetailsState
             Expanded(
               child: _forms.isEmpty
                   ? Center(
-                      child: Text('po_no_investments'.tr(),
-                          style: const TextStyle(color: Colors.white)))
+                      child: Text(
+                        'po_no_investments'.tr(),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    )
                   : PageView.builder(
                       controller: _pageController,
                       itemCount: _forms.length,
@@ -203,13 +418,15 @@ class _PostOfficeInvestmentDetailsState
                       },
                     ),
             ),
-            const SizedBox(height: 80),
+            const SizedBox(height: 80), // Space for FAB
           ],
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: _addInvestment,
+          tooltip: 'Add Investment',
           child: const Icon(Icons.add),
         ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
   }
@@ -221,9 +438,9 @@ class _PostOfficeInvestmentDetailsState
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            Color.fromARGB(255, 255, 165, 0),
-            Color.fromARGB(255, 255, 140, 0),
-            Color.fromARGB(255, 255, 69, 0),
+            Color.fromARGB(255, 154, 197, 232),
+            Color.fromARGB(255, 115, 149, 169),
+            Color.fromARGB(255, 103, 149, 209),
           ],
           stops: [0.0, 0.5, 1.0],
           begin: Alignment.topCenter,
@@ -443,7 +660,7 @@ class _PostOfficeInvestmentDetailsState
                             }).toList(),
                             style: const TextStyle(color: Colors.white),
                             dropdownColor:
-                                const Color.fromARGB(255, 255, 140, 0),
+                                const Color(0xFF1E90FF), // Matching blue
                             decoration: InputDecoration(
                               suffixIcon: const Icon(
                                   Icons.account_balance_wallet,
@@ -503,7 +720,7 @@ class _PostOfficeInvestmentDetailsState
                             }).toList(),
                             style: const TextStyle(color: Colors.white),
                             dropdownColor:
-                                const Color.fromARGB(255, 255, 140, 0),
+                                const Color(0xFF1E90FF), // Matching blue
                             decoration: InputDecoration(
                               suffixIcon: const Icon(Icons.category,
                                   color: Colors.white),
@@ -562,7 +779,7 @@ class _PostOfficeInvestmentDetailsState
                             }).toList(),
                             style: const TextStyle(color: Colors.white),
                             dropdownColor:
-                                const Color.fromARGB(255, 255, 140, 0),
+                                const Color(0xFF1E90FF), // Matching blue
                             decoration: InputDecoration(
                               suffixIcon: const Icon(Icons.warning,
                                   color: Colors.white),
@@ -621,7 +838,7 @@ class _PostOfficeInvestmentDetailsState
                             }).toList(),
                             style: const TextStyle(color: Colors.white),
                             dropdownColor:
-                                const Color.fromARGB(255, 255, 140, 0),
+                                const Color(0xFF1E90FF), // Matching blue
                             decoration: InputDecoration(
                               suffixIcon:
                                   const Icon(Icons.timer, color: Colors.white),
@@ -1024,8 +1241,7 @@ class _PostOfficeInvestmentDetailsState
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
-                                  foregroundColor:
-                                      const Color.fromARGB(255, 255, 140, 0),
+                                  foregroundColor: const Color(0xFF1E90FF),
                                 ),
                                 child: Text('po_clear_form'.tr()),
                               ),
@@ -1036,8 +1252,7 @@ class _PostOfficeInvestmentDetailsState
                                 onPressed: () => _saveInvestment(index),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
-                                  foregroundColor:
-                                      const Color.fromARGB(255, 255, 140, 0),
+                                  foregroundColor: const Color(0xFF1E90FF),
                                 ),
                                 child: Text('po_save'.tr()),
                               ),

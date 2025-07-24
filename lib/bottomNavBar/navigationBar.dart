@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:revesion/mainArea/docs.dart';
 import 'package:revesion/mainArea/notifications.dart';
 import 'package:revesion/mainArea/selection.dart';
@@ -10,64 +11,66 @@ class CustomNavBar extends StatelessWidget {
 
   void _onTap(BuildContext context, int index) {
     if (index == navIndex) return;
+    late Widget dest;
     switch (index) {
       case 0:
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const SelectOption()));
+        dest = const SelectOption();
         break;
-
       case 1:
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const Documents()));
+        dest = const Documents();
         break;
-
       case 2:
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (_) => const NotificationsPage()));
+        dest = const NotificationsPage();
         break;
-
       case 3:
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const Profile()));
+        dest = const Profile();
         break;
     }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => dest),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(48), topRight: Radius.circular(48)),
-      child: BottomNavigationBar(
-        type: BottomNavigationBarType.shifting,
-        showUnselectedLabels: true,
-        unselectedItemColor: Colors.grey[800],
-        selectedFontSize: 16,
-        unselectedFontSize: 11,
-        selectedIconTheme: const IconThemeData(size: 30),
-        fixedColor: Colors.black,
-        currentIndex: navIndex,
-        onTap: (index) => _onTap(context, index),
-        items: [
-          const BottomNavigationBarItem(
-            backgroundColor: Color(0xFFE5F9EE),
-            icon: Icon(
-              Icons.home_rounded,
-            ),
-            label: 'Home',
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFE5F9EE),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(48),
+          topRight: Radius.circular(48),
+        ),
+        boxShadow: [BoxShadow(blurRadius: 20, color: Colors.black12)],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: GNav(
+        gap: 8,
+        activeColor: Colors.black,
+        color: Colors.grey[800],
+        iconSize: 28,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        duration: const Duration(milliseconds: 800),
+        tabBackgroundColor: Colors.white,
+        selectedIndex: navIndex,
+        onTabChange: (idx) => _onTap(context, idx),
+        tabs: const [
+          GButton(
+            icon: Icons.home_rounded,
+            text: 'Home',
           ),
-          const BottomNavigationBarItem(
-              backgroundColor: Color(0xFFE5F9EE),
-              icon: Icon(Icons.article),
-              label: 'Documents'),
-          const BottomNavigationBarItem(
-              backgroundColor: Color(0xFFE5F9EE),
-              icon: Icon(Icons.notification_add),
-              label: 'Notifications'),
-          const BottomNavigationBarItem(
-              backgroundColor: Color(0xFFE5F9EE),
-              icon: Icon(Icons.person),
-              label: 'Profile'),
+          GButton(
+            icon: Icons.article,
+            text: 'Documents',
+          ),
+          GButton(
+            icon: Icons.notification_add,
+            text: 'Notifications',
+          ),
+          GButton(
+            icon: Icons.person,
+            text: 'Profile',
+          ),
         ],
       ),
     );

@@ -1,14 +1,9 @@
-// ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors, unused_field, avoid_print, empty_catches
-
-import 'dart:io';
+// ignore_for_file: use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:dob_input_field/dob_input_field.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:revesion/bottomNavBar/navigationBar.dart';
 
 class Profile extends StatefulWidget {
@@ -25,7 +20,6 @@ class _ProfileState extends State<Profile> {
   final _emailCtrl = TextEditingController();
   final _pwdCtrl = TextEditingController();
   final _dobCtrl = TextEditingController();
-  final _countryCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
 
   final FirebaseAuth authInst = FirebaseAuth.instance;
@@ -41,53 +35,24 @@ class _ProfileState extends State<Profile> {
 
   String? selectedCountry;
   DateTime? selectedDate;
-  File? _image;
-
-  Future<void> pickImage(ImageSource imgSrc) async {
-    final pickedImage = await ImagePicker().pickImage(source: imgSrc);
-
-    if (pickedImage != null) {
-      setState(() {
-        _image = File(pickedImage.path);
-      });
-    }
-  }
-
-  Future<String> uploadImage() async {
-    if (_image == null) return '';
-    try {
-      // .ref() is the starting point for storage operations
-      // .ref('images') will point to the images folder within the storage bucket
-      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      final imageRef = FirebaseStorage.instance.ref('images').child(fileName);
-      final uploadTask = imageRef.putFile(
-          _image!); //uploadTask represents the entire upload process, it gives control over starting,pausing,cancelling the task that is taking place
-      final taskSnapshot = await uploadTask.whenComplete(() =>
-          null); // taskSnapshot provides progress info(no. of bytes uploaded, total no of bytes, current state of task)
-
-      final downloadURL = await taskSnapshot.ref.getDownloadURL();
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profile Picture uploaded successfully')));
-      return downloadURL;
-    } catch (e) {
-      print(e);
-      return '';
-    }
-  }
 
   Future<void> updateUserData() async {
     try {
       final userUid = authInst.currentUser!.uid;
       final user = firestoreInst.collection("userInfo").doc(userUid);
-      //final imageURL = await uploadImage();
       await user.update({
+        'name': _nameCtrl.text.trim(),
         'phone': _phoneCtrl.text.trim(),
-        'dob': selectedDate,
+        'dob': selectedDate != null ? Timestamp.fromDate(selectedDate!) : null,
         'country': selectedCountry,
-        //'imageURL': imageURL.isNotEmpty ? imageURL : ''
       });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          backgroundColor: Colors.green,
+          content: Text("Profile updated successfully!")));
     } catch (e) {
-      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Error: ${e.toString()}")));
     }
   }
 
@@ -102,11 +67,26 @@ class _ProfileState extends State<Profile> {
         _nameCtrl.text = userData['name'];
         _emailCtrl.text = userData['email'];
         _phoneCtrl.text = userData['phone'];
-        selectedCountry = userData['country'] as String;
-        final ts = userData['dob'] as Timestamp;
-        selectedDate = ts.toDate();
+        final country = userData['country'] as String;
+        selectedCountry = countires.contains(country) ? country : null;
+        final ts = userData['dob'] as Timestamp?;
+        selectedDate = ts?.toDate();
+        if (selectedDate != null) {
+          _dobCtrl.text =
+              "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}";
+        }
       });
-    } catch (e) {}
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+    }
+  }
+
+  bool _hasPasswordProvider() {
+    final user = authInst.currentUser;
+    if (user == null) return false;
+    return user.providerData
+        .any((provider) => provider.providerId == 'password');
   }
 
   @override
@@ -115,14 +95,380 @@ class _ProfileState extends State<Profile> {
     getUserData();
   }
 
+  // Section header widget styled like the old profile page
+  Widget _buildSectionHeader(String title) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Text field widget styled like the old profile page
+  Widget _buildTextField(
+    bool enable,
+    double pad,
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: pad),
+      child: TextFormField(
+        enabled: enable,
+        controller: controller,
+        keyboardType: keyboardType,
+        obscureText: obscureText,
+        cursorColor: Colors.white,
+        style: const TextStyle(fontSize: 16, color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: Colors.white),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Colors.white, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.1),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle: const TextStyle(color: Colors.white70),
+          hintStyle: const TextStyle(color: Colors.white70),
+        ),
+      ),
+    );
+  }
+
+  // Date field widget styled like the old profile page
+  Widget _buildDateField() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: TextFormField(
+        style: const TextStyle(color: Colors.white),
+        controller: _dobCtrl,
+        readOnly: true,
+        onTap: () async {
+          final DateTime? picked = await showDatePicker(
+            context: context,
+            initialDate: selectedDate ?? DateTime.now(),
+            firstDate: DateTime(1900),
+            lastDate: DateTime.now(),
+          );
+          if (picked != null && picked != selectedDate) {
+            setState(() {
+              selectedDate = picked;
+              _dobCtrl.text = "${picked.day}/${picked.month}/${picked.year}";
+            });
+          }
+        },
+        decoration: InputDecoration(
+          labelText: 'Date of Birth',
+          prefixIcon:
+              const Icon(Icons.calendar_today_outlined, color: Colors.white),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Colors.white, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.1),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle: const TextStyle(color: Colors.white70),
+          hintStyle: const TextStyle(color: Colors.white70),
+        ),
+      ),
+    );
+  }
+
+  // Country dropdown widget styled like the old profile page
+  Widget _buildCountryField() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: DropdownButtonFormField(
+        hint: const Text(
+          "Select your country",
+          style: TextStyle(color: Colors.white70),
+        ),
+        dropdownColor: Colors.grey[800],
+        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+        value: selectedCountry,
+        items: countires
+            .map((country) => DropdownMenuItem<String>(
+                  value: country,
+                  child: Text(
+                    country,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ))
+            .toList(),
+        onChanged: (newVal) {
+          setState(() {
+            selectedCountry = newVal.toString();
+          });
+        },
+        decoration: InputDecoration(
+          labelText: 'Country',
+          prefixIcon:
+              const Icon(Icons.location_on_outlined, color: Colors.white),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Colors.white, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.1),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle: const TextStyle(color: Colors.white70),
+          hintStyle: const TextStyle(color: Colors.white70),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _changePassword(TextEditingController currentPwdCtrl,
+      TextEditingController newPwdCtrl) async {
+    if (!_hasPasswordProvider()) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            "You signed up with Google and don't have a password. Password changes are not available."),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final curPwd = currentPwdCtrl.text.trim();
+    final newPwd = newPwdCtrl.text.trim();
+    final userPwdChangeInstance = authInst.currentUser;
+
+    if (curPwd.isEmpty || newPwd.isEmpty || userPwdChangeInstance == null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Please Fill In All The Fields!"),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    try {
+      await userPwdChangeInstance.updatePassword(newPwd);
+
+      Navigator.pop(context);
+      Navigator.pop(context);
+      currentPwdCtrl.clear();
+      newPwdCtrl.clear();
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          backgroundColor: Colors.green,
+          content: Text(
+            "Your Password Has Been Updated Successfully!",
+          )));
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            backgroundColor: Colors.red,
+            content: Text('Please Enter A Stronger Password.')));
+        Navigator.pop(context);
+      } else if (e.code == 'requires-recent-login') {
+        try {
+          final credential = EmailAuthProvider.credential(
+              email: userPwdChangeInstance.email!, password: curPwd);
+          await userPwdChangeInstance.reauthenticateWithCredential(credential);
+          await userPwdChangeInstance.updatePassword(newPwd);
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Your Password Has Been Updated Successfully!"),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } on FirebaseAuthException catch (reAuthError) {
+          if (reAuthError.code == 'wrong-password') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Please Enter The Correct CURRENT passoword"),
+                backgroundColor: Colors.red,
+              ),
+            );
+            Navigator.pop(context);
+          } else {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Error: ${reAuthError.message}"),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        } catch (error) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error: ${error.toString()}"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("An Unexpected Error Has Occured: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void showChangePwdDialog() {
+    final currentPwdCtrl = TextEditingController();
+    final newPwdCtrl = TextEditingController();
+
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.grey[800],
+            icon: const Icon(
+              Icons.change_circle,
+              size: 35,
+            ),
+            iconColor: Colors.black,
+            title: const Text(
+              "Change Password",
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+            content: SizedBox(
+              width: 450,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    style: const TextStyle(color: Colors.white),
+                    obscureText: true,
+                    keyboardType: TextInputType.text,
+                    controller: currentPwdCtrl,
+                    decoration: InputDecoration(
+                      label: const Text('Enter Current Password'),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(width: 2)),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(width: 2)),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  TextFormField(
+                    style: const TextStyle(color: Colors.white),
+                    obscureText: true,
+                    keyboardType: TextInputType.text,
+                    controller: newPwdCtrl,
+                    decoration: InputDecoration(
+                      label: const Text(
+                        'Enter New Password',
+                      ),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(width: 2)),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(width: 2)),
+                    ),
+                  )
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    "Cancel",
+                    style: TextStyle(color: Colors.red),
+                  )),
+              const SizedBox(
+                width: 110,
+              ),
+              ElevatedButton(
+                  onPressed: () {
+                    _changePassword(currentPwdCtrl, newPwdCtrl);
+                  },
+                  child: const Text(
+                    "Confirm",
+                    style: TextStyle(color: Colors.green),
+                  ))
+            ],
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(colors: [
-          Color(0xFF0B0F33), // deep navy blue
-          Color(0xFF1C1F6B), // indigo-blue
-          Color(0xFF2C3E91), // rich blue
+          Color(0xFF0B0F33),
+          Color(0xFF1C1F6B),
+          Color(0xFF2C3E91),
           Color(0xFF5369D6),
         ], stops: [
           0.0,
@@ -132,11 +478,11 @@ class _ProfileState extends State<Profile> {
         ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
       ),
       child: Scaffold(
-        bottomNavigationBar: CustomNavBar(navIndex: 3),
+        bottomNavigationBar: const CustomNavBar(navIndex: 3),
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           centerTitle: true,
-          title: Text(
+          title: const Text(
             "Edit Profile",
             style: TextStyle(
                 fontFamily: 'Helvetica',
@@ -148,7 +494,7 @@ class _ProfileState extends State<Profile> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              icon: Icon(
+              icon: const Icon(
                 Icons.arrow_back_ios_new,
                 color: Colors.white,
                 size: 40,
@@ -168,7 +514,7 @@ class _ProfileState extends State<Profile> {
                       onLongPress: () {
                         HapticFeedback.mediumImpact();
                       },
-                      child: CircleAvatar(
+                      child: const CircleAvatar(
                         radius: 86,
                         backgroundImage: AssetImage('assets/photos/pp.jpg'),
                       ),
@@ -181,7 +527,7 @@ class _ProfileState extends State<Profile> {
                         onPressed: () {
                           HapticFeedback.mediumImpact();
                         },
-                        icon: Icon(Icons.camera_alt,
+                        icon: const Icon(Icons.camera_alt,
                             color: Colors.white, size: 30),
                       )),
                   Positioned(
@@ -191,313 +537,91 @@ class _ProfileState extends State<Profile> {
                         onPressed: () {
                           HapticFeedback.mediumImpact();
                         },
-                        icon: Icon(Icons.add_photo_alternate,
+                        icon: const Icon(Icons.add_photo_alternate,
                             color: Colors.white, size: 30),
                       ))
                 ],
               ),
             ),
-            const SizedBox(
-              height: 20,
-            ),
+            const SizedBox(height: 20),
             Form(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, bottom: 6),
-                    child: Text(
-                      "Name",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      controller: _nameCtrl,
-                      style: TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                          suffixIcon: Icon(Icons.badge, color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  BorderSide(color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  BorderSide(color: Colors.white70, width: 2)),
-                          labelText: 'Name',
-                          labelStyle: TextStyle(color: Colors.white70)),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "E-Mail",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.emailAddress,
-                      controller: _emailCtrl,
-                      decoration: InputDecoration(
-                          suffixIcon: Icon(Icons.email, color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  BorderSide(color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  BorderSide(color: Colors.white70, width: 2)),
-                          labelText: 'Email',
-                          labelStyle: TextStyle(color: Colors.white70)),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Phone Number",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: TextStyle(color: Colors.white),
-                      keyboardType: TextInputType.phone,
-                      controller: _phoneCtrl,
-                      decoration: InputDecoration(
-                          suffixIcon: Icon(Icons.numbers, color: Colors.white),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  BorderSide(color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  BorderSide(color: Colors.white70, width: 2)),
-                          labelText: 'Phone Number',
-                          labelStyle: TextStyle(color: Colors.white70)),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Password",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: TextFormField(
-                      cursorColor: Colors.white,
-                      style: TextStyle(color: Colors.white),
-                      obscureText: true,
-                      controller: _pwdCtrl,
-                      decoration: InputDecoration(
-                          suffixIcon: Icon(
-                            Icons.password,
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader('Personal Information'),
+                    _buildTextField(
+                        true, 20, _nameCtrl, 'Name', Icons.person_outline),
+                    _buildTextField(
+                        false, 20, _emailCtrl, 'Email', Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress),
+                    _buildDateField(),
+                    _buildTextField(
+                        false, 5, _pwdCtrl, 'Password', Icons.lock_outline,
+                        obscureText: true),
+                    GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          showChangePwdDialog();
+                        },
+                        child: const Text(
+                          "Change password?",
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
+                        )),
+                    const SizedBox(height: 30),
+                    _buildSectionHeader('Contact Information'),
+                    _buildTextField(true, 20, _phoneCtrl, 'Phone Number',
+                        Icons.phone_outlined,
+                        keyboardType: TextInputType.phone),
+                    _buildCountryField(),
+                    const SizedBox(height: 40),
+                    Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.deepPurple, Colors.purple[300]!],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.deepPurple.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await updateUserData();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          "Save Changes",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  BorderSide(color: Colors.white, width: 2)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  BorderSide(color: Colors.white70, width: 2)),
-                          labelText: 'Password',
-                          labelStyle: TextStyle(color: Colors.white70)),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 23, bottom: 6, top: 20),
-                    child: Text(
-                      "Date of Birth",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 20),
-                    child: DOBInputField(
-                      initialDate: selectedDate ?? DateTime(1900, 1, 1),
-                      cursorColor: Colors.white,
-                      dateFormatType: DateFormatType.DDMMYYYY,
-                      style: TextStyle(color: Colors.white),
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                      showLabel: true,
-                      showCursor: true,
-                      autovalidateMode: AutovalidateMode.always,
-                      onDateSubmitted: (date) {
-                        setState(() {
-                          selectedDate = date;
-                          _dobCtrl.text =
-                              "${date.day}/${date.month}/${date.year}";
-                        });
-                      },
-                      inputDecoration: InputDecoration(
-                        hintStyle: TextStyle(color: Colors.white70),
-                        labelText: "Press enter after filling in your DOB",
-                        labelStyle: TextStyle(fontSize: 12),
-                        suffixIcon: Icon(
-                          Icons.calendar_month,
-                          color: Colors.white,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.white, width: 2)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.white70, width: 2)),
-                        errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.white70, width: 2)),
-                        focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.white, width: 2)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.only(left: 23, bottom: 6, top: 10),
-                    child: Text(
-                      "Country",
-                      style: TextStyle(
-                          fontFamily: "Helvetica",
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23, right: 20),
-                    child: DropdownButtonFormField(
-                      hint: Text(
-                        "Select your country",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      dropdownColor: Colors.grey,
-                      icon: Icon(
-                        Icons.keyboard_arrow_down,
-                      ),
-                      iconEnabledColor: Colors.white,
-                      value: selectedCountry,
-                      items: countires
-                          .map((country) => DropdownMenuItem<String>(
-                                value: country,
-                                child: Text(
-                                  country,
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (newVal) {
-                        setState(() {
-                          selectedCountry = newVal.toString();
-                        });
-                      },
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.white70, width: 2)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.white, width: 2)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0),
-                    child: Center(
-                      child: SizedBox(
-                        width: 300,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Color.fromARGB(255, 45, 255, 157)
-                                        .withOpacity(0.5),
-                                    spreadRadius: 8,
-                                    blurRadius: 16,
-                                    offset: Offset(0, 0)),
-                              ],
-                              borderRadius: BorderRadius.circular(32),
-                              gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFF6A11CB),
-                                    Color(0xFF4056D4),
-                                    Color(0xFF2575FC),
-                                  ],
-                                  stops: [
-                                    0.0,
-                                    0.5,
-                                    1.0
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight)),
-                          child: Padding(
-                            padding: EdgeInsets.all(5),
-                            child: ElevatedButton(
-                                onPressed: () async {
-                                  await updateUserData();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: Colors.white,
-                                  elevation: 10,
-                                ),
-                                child: const Text(
-                                  "Save Changes",
-                                  style: TextStyle(
-                                      fontFamily: 'Helvetica',
-                                      fontWeight: FontWeight.bold),
-                                )),
-                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),

@@ -5,3 +5,4 @@ String hiBoxWithUid(String uid) => 'hiBox_$uid';
 String viBoxWithUid(String uid) => 'viBox_$uid';
 String aiBoxWithUid(String uid) => 'aiBox_$uid';
 String docBoxWithUid(String uid) => 'docBox_$uid';
+String expenseBoxWithUid(String uid) => 'expenseBox_$uid';

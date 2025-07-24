@@ -1,37 +1,64 @@
-// ignore_for_file: unused_import
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:revesion/firebase_options.dart';
-import 'package:revesion/hive_box_const.dart';
 import 'package:revesion/models/altInvestModel.dart';
 import 'package:revesion/models/bankModel.dart';
 import 'package:revesion/models/document_model.dart';
 import 'package:revesion/models/healthInsurance.dart';
 import 'package:revesion/models/lifeInsurance.dart';
 import 'package:revesion/models/postOffice.dart';
+import 'package:revesion/models/transactions.dart';
 import 'package:revesion/models/vehicle_insurance_model.dart';
-import 'package:revesion/settings&profile/profile.dart';
 import 'login/test.dart';
 import 'mainArea/selection.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'mainArea/notifications.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
-import 'dart:convert';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await EasyLocalization
-      .ensureInitialized(); // Ensure EasyLocalization is ready
+  await EasyLocalization.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   tz.initializeTimeZones();
-  await NotificationService.initialize();
+  tz.setLocalLocation(tz.getLocation('Asia/Kolkata')); // Set IST time zone
+
+  // Request notification permission
+  if (await Permission.notification.isDenied) {
+    await Permission.notification.request();
+  }
+
+  // Initialize notifications
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) {
+      // Handle notification tap
+    },
+  );
+
+  // Create notification channel for Android
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'maturity_reminder_channel',
+    'Maturity Reminders',
+    description: 'Notifications for Post Office investment maturity reminders',
+    importance: Importance.max,
+  );
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+  print('Notification channel created: ${channel.id}'); // Debug log
+
   await Hive.initFlutter();
   Hive.registerAdapter(BankAccountModelAdapter());
   Hive.registerAdapter(PostOfficeAdapter());
@@ -40,6 +67,7 @@ Future<void> main() async {
   Hive.registerAdapter(VehicleInsuranceModelAdapter());
   Hive.registerAdapter(AltInvestModelAdapter());
   Hive.registerAdapter(DocumentModelAdapter());
+  Hive.registerAdapter(TransactionAdapter());
 
   runApp(
     EasyLocalization(
@@ -57,8 +85,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title:
-          'Your Personal Finance Manager', // Static title to avoid early tr()
+      title: 'Your Personal Finance Manager',
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,

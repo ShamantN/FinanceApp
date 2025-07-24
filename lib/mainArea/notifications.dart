@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'dart:io' show Platform;
 
 // Payment Model
 class PaymentReminder {
@@ -89,6 +90,14 @@ class NotificationService {
     );
 
     await _notifications.initialize(settings);
+
+    // Request permission on Android 13+
+    if (Platform.isAndroid) {
+      await _notifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.requestNotificationsPermission();
+    }
   }
 
   static Future<void> scheduleMonthlyNotification(
@@ -106,12 +115,8 @@ class NotificationService {
       android: androidDetails,
     );
 
-    // Calculate next payment date
-    DateTime nextPayment = reminder.paymentDate;
-    final now = DateTime.now();
-    if (nextPayment.isBefore(now)) {
-      nextPayment = DateTime(now.year, now.month + 1, reminder.paymentDate.day);
-    }
+    // Calculate next payment date at 9 AM
+    DateTime nextPayment = _getNextPaymentDate(reminder.paymentDate);
 
     await _notifications.zonedSchedule(
       reminder.id.hashCode,
@@ -122,6 +127,26 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
     );
+  }
+
+  static DateTime _getNextPaymentDate(DateTime paymentDate) {
+    final now = DateTime.now();
+    final day = paymentDate.day;
+    const hour = 9; // Set to 9 AM
+    const minute = 0;
+
+    // Calculate the next payment date
+    DateTime nextPayment = DateTime(now.year, now.month, day, hour, minute);
+    if (nextPayment.isBefore(now)) {
+      nextPayment = DateTime(now.year, now.month + 1, day, hour, minute);
+    }
+
+    // Handle cases where the day doesn't exist in the next month
+    while (nextPayment.month != (now.month + 1) % 12) {
+      nextPayment = nextPayment.subtract(const Duration(days: 1));
+    }
+
+    return nextPayment;
   }
 
   static tz.TZDateTime _convertToTZDateTime(DateTime dateTime) {
@@ -260,9 +285,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
       appBar: AppBar(
         toolbarHeight: 80,
         shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadiusGeometry.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16))),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+          ),
+        ),
         elevation: 10,
         title: const Text(
           'Payment Reminders',

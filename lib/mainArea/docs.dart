@@ -387,7 +387,10 @@ class _DocumentsState extends State<Documents> {
           children: [
             Icon(Icons.warning, color: Colors.red.shade700, size: 28),
             const SizedBox(width: 12),
-            const Text('ದಾಖಲೆ ಅಳಿಸಿ / Delete Document'),
+            const Text(
+              'ದಾಖಲೆ ಅಳಿಸಿ / Delete Document',
+              style: TextStyle(fontSize: 18),
+            ),
           ],
         ),
         content: Text(

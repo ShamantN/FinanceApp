@@ -9,6 +9,7 @@ import 'package:revesion/details/LI.dart';
 import 'package:revesion/details/PO.dart';
 import 'package:revesion/details/VI.dart';
 import 'package:revesion/details/bank.dart';
+import 'package:revesion/details/expenseTracker.dart';
 import 'package:revesion/settings&profile/profile.dart';
 import 'package:revesion/settings&profile/settings.dart';
 import 'package:revesion/details/altInvestment.dart';
@@ -191,15 +192,15 @@ class _SelectOptionState extends State<SelectOption> {
                               width: 150,
                               height: 150,
                             ),
-                            const Text(
-                              "splash_title",
-                              style: TextStyle(
-                                fontFamily: 'Helvetica',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 25,
-                                color: Colors.black,
-                              ),
-                            ).tr(),
+                            ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              FinanceTrackerPage()));
+                                },
+                                child: Text("Expense Tracker"))
                           ],
                         ),
                       ),

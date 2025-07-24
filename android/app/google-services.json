@@ -12,7 +12,20 @@
           "package_name": "com.example.revesion"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "557308803278-tmcmmd5fnejg1pm42n5c99jfnbh4l34i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.revesion",
+            "certificate_hash": "129dfd20c189329a2697bebb7a38413a520f8190"
+          }
+        },
+        {
+          "client_id": "557308803278-ovkm3kbkqpuukubctf0b91p9h1clckjk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAHH9xS7bcNWa1iiPIGxGcnZiffiM_6Sqg"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "557308803278-ovkm3kbkqpuukubctf0b91p9h1clckjk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "557308803278-eqb57t6147imrh87avu7lhtvnli4r17v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.revesion"
+              }
+            }
+          ]
         }
       }
     }
