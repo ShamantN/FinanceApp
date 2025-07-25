@@ -14,6 +14,11 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  String? selectedCountry;
+  String? selectedState;
+  String? photoUrl;
+  DateTime? selectedDate;
+
   final _formKey = GlobalKey<FormState>();
 
   final _nameCtrl = TextEditingController();
@@ -27,14 +32,38 @@ class _ProfileState extends State<Profile> {
 
   final List<String> countires = [
     'India',
-    'China',
-    'Russia',
-    'USA',
-    'Australia'
   ];
 
-  String? selectedCountry;
-  DateTime? selectedDate;
+  final List<String> states = [
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chhattisgarh',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+  ];
 
   Future<void> updateUserData() async {
     try {
@@ -45,6 +74,7 @@ class _ProfileState extends State<Profile> {
         'phone': _phoneCtrl.text.trim(),
         'dob': selectedDate != null ? Timestamp.fromDate(selectedDate!) : null,
         'country': selectedCountry,
+        'state': selectedState
       });
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.green,
@@ -59,8 +89,15 @@ class _ProfileState extends State<Profile> {
   Future<void> getUserData() async {
     try {
       final userUid = authInst.currentUser!.uid;
+      photoUrl = authInst.currentUser!.photoURL;
       final docSnapshot =
           await firestoreInst.collection("userInfo").doc(userUid).get();
+      if (!docSnapshot.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.red,
+            content: Text("User document does not exist.")));
+        return;
+      }
       final userData = docSnapshot.data() as Map<String, dynamic>;
 
       setState(() {
@@ -69,6 +106,8 @@ class _ProfileState extends State<Profile> {
         _phoneCtrl.text = userData['phone'];
         final country = userData['country'] as String;
         selectedCountry = countires.contains(country) ? country : null;
+        final state = userData['state'] as String;
+        selectedState = states.contains(state) ? state : null;
         final ts = userData['dob'] as Timestamp?;
         selectedDate = ts?.toDate();
         if (selectedDate != null) {
@@ -218,18 +257,18 @@ class _ProfileState extends State<Profile> {
   }
 
   // Country dropdown widget styled like the old profile page
-  Widget _buildCountryField() {
+  Widget _buildCountryField(String value, String label, List stateOrCountry) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: DropdownButtonFormField(
-        hint: const Text(
-          "Select your country",
+        hint: Text(
+          value,
           style: TextStyle(color: Colors.white70),
         ),
         dropdownColor: Colors.grey[800],
         icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-        value: selectedCountry,
-        items: countires
+        value: label == 'Country' ? selectedCountry : selectedState,
+        items: stateOrCountry
             .map((country) => DropdownMenuItem<String>(
                   value: country,
                   child: Text(
@@ -240,11 +279,15 @@ class _ProfileState extends State<Profile> {
             .toList(),
         onChanged: (newVal) {
           setState(() {
-            selectedCountry = newVal.toString();
+            if (label == 'Country') {
+              selectedCountry = newVal.toString();
+            } else {
+              selectedState = newVal.toString();
+            }
           });
         },
         decoration: InputDecoration(
-          labelText: 'Country',
+          labelText: label,
           prefixIcon:
               const Icon(Icons.location_on_outlined, color: Colors.white),
           border: OutlineInputBorder(
@@ -490,15 +533,6 @@ class _ProfileState extends State<Profile> {
                 fontSize: 40,
                 color: Colors.white),
           ),
-          leading: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-                size: 40,
-              )),
           backgroundColor: Colors.transparent,
         ),
         body: ListView(
@@ -514,32 +548,14 @@ class _ProfileState extends State<Profile> {
                       onLongPress: () {
                         HapticFeedback.mediumImpact();
                       },
-                      child: const CircleAvatar(
+                      child: CircleAvatar(
                         radius: 86,
-                        backgroundImage: AssetImage('assets/photos/pp.jpg'),
+                        backgroundImage: photoUrl != null
+                            ? NetworkImage(photoUrl!)
+                            : const AssetImage('assets/photos/pp.jpg'),
                       ),
                     ),
                   ),
-                  Positioned(
-                      bottom: 20,
-                      right: -5,
-                      child: IconButton(
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                        },
-                        icon: const Icon(Icons.camera_alt,
-                            color: Colors.white, size: 30),
-                      )),
-                  Positioned(
-                      bottom: 20,
-                      right: 140,
-                      child: IconButton(
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                        },
-                        icon: const Icon(Icons.add_photo_alternate,
-                            color: Colors.white, size: 30),
-                      ))
                 ],
               ),
             ),
@@ -576,7 +592,9 @@ class _ProfileState extends State<Profile> {
                     _buildTextField(true, 20, _phoneCtrl, 'Phone Number',
                         Icons.phone_outlined,
                         keyboardType: TextInputType.phone),
-                    _buildCountryField(),
+                    _buildCountryField(
+                        'Select your country', 'Country', countires),
+                    _buildCountryField('Select your state', 'State', states),
                     const SizedBox(height: 40),
                     Container(
                       width: double.infinity,

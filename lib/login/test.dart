@@ -118,6 +118,7 @@ class _LoginState extends State<Login> {
         'phone': phone,
         'dob': null,
         'country': '',
+        'state': '',
         'createdAt': FieldValue.serverTimestamp()
       });
     } on FirebaseException catch (e) {
@@ -187,9 +188,12 @@ class _LoginState extends State<Login> {
           await FirebaseAuth.instance.signInWithCredential(credential);
       final user = userCredential.user!;
       if (userCredential.additionalUserInfo!.isNewUser == true) {
-        await uploadToFirestore(
-            userCredential, user.displayName!, user.email!, user.phoneNumber!);
+        await uploadToFirestore(userCredential, user.displayName ?? '',
+            user.email ?? '', user.phoneNumber ?? '');
       }
+
+      print("Hello World");
+      print(user.displayName! + user.email! + user.phoneNumber!);
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() {

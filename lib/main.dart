@@ -57,7 +57,6 @@ Future<void> main() async {
       .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
-  print('Notification channel created: ${channel.id}'); // Debug log
 
   await Hive.initFlutter();
   Hive.registerAdapter(BankAccountModelAdapter());

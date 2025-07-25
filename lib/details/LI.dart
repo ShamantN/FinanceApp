@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:revesion/hiveFunctions.dart';
 import 'package:revesion/hive_box_const.dart';
 import 'package:revesion/models/lifeInsurance.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class LifeInsuranceDetails extends StatefulWidget {
   const LifeInsuranceDetails({super.key});
@@ -18,6 +22,8 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
   final List<LifeInsuranceForm> _forms = [];
   final PageController _pageController = PageController(viewportFraction: 0.9);
   late final Box<LifeInsurance> _liBox;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   final List<String> insuranceCompanies = [
     'li_company_lic'.tr(),
@@ -55,6 +61,11 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
   void initState() {
     super.initState();
     _openAndLoadBox();
+    flutterLocalNotificationsPlugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
+    );
   }
 
   Future<void> _openAndLoadBox() async {
@@ -66,6 +77,9 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
           key, insuranceCompanies, policyTypes, premiumFrequency);
       form.loadData(data!);
       _forms.add(form);
+      if (data.maturityDate != null) {
+        _scheduleMaturityNotifications(data, key);
+      }
     }
     setState(() {});
   }
@@ -88,7 +102,8 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
     });
   }
 
-  void _removePolicy(int index) {
+  void _removePolicy(int index) async {
+    await _cancelMaturityNotifications(_forms[index].key);
     setState(() {
       _liBox.delete(_forms[index].key);
       _forms.removeAt(index);
@@ -105,15 +120,203 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
     }
   }
 
-  void _savePolicy(int index) {
+  void _savePolicy(int index) async {
     final form = _forms[index];
     if (form.formKey.currentState!.validate()) {
       final data = form.toLifeInsurance();
-      _liBox.put(form.key, data);
+      await _liBox.put(form.key, data);
+      if (data.maturityDate != null) {
+        await _scheduleMaturityNotifications(data, form.key);
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('li_save_success'.tr())),
       );
     }
+  }
+
+  Future<void> _scheduleMaturityNotifications(
+      LifeInsurance data, int key) async {
+    if (data.maturityDate == null) return;
+
+    final now = tz.TZDateTime.now(tz.local);
+    final maturityDate = tz.TZDateTime.from(data.maturityDate!, tz.local);
+
+    final intervals = [
+      const Duration(days: 7),
+      const Duration(days: 2),
+      const Duration(days: 1),
+    ];
+
+    for (var i = 0; i < intervals.length; i++) {
+      final notificationTime = maturityDate.subtract(intervals[i]);
+      if (notificationTime.isAfter(now)) {
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          key * 10 + i,
+          'li_maturity_notification_title'.tr(),
+          'li_maturity_notification_body'
+              .tr()
+              .replaceAll(
+                '{0}',
+                data.insuredCompanyName,
+              )
+              .replaceAll(
+                '{1}',
+                data.policyNumber,
+              )
+              .replaceAll(
+                '{2}',
+                intervals[i].inDays.toString(),
+              ),
+          notificationTime,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'maturity_reminder_channel',
+              'Maturity Reminders',
+              channelDescription:
+                  'Notifications for Life Insurance maturity reminders',
+              importance: Importance.max,
+              priority: Priority.high,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          payload:
+              '${'li_maturity_notification_title'.tr()}|${'li_maturity_notification_body'.tr().replaceAll(
+                    '{0}',
+                    data.insuredCompanyName,
+                  ).replaceAll(
+                    '{1}',
+                    data.policyNumber,
+                  ).replaceAll(
+                    '{2}',
+                    intervals[i].inDays.toString(),
+                  )}',
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelMaturityNotifications(int key) async {
+    for (var i = 0; i < 3; i++) {
+      await flutterLocalNotificationsPlugin.cancel(key * 10 + i);
+    }
+  }
+
+  Future<void> _scheduleTestNotification() async {
+    final TextEditingController insuredCompanyNameCtrl =
+        TextEditingController();
+    final TextEditingController policyNumberCtrl = TextEditingController();
+    final TextEditingController daysCtrl = TextEditingController();
+
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate == null) return;
+
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (pickedTime == null) return;
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('li_test_notification'.tr()),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: insuredCompanyNameCtrl,
+              decoration:
+                  InputDecoration(labelText: 'li_insured_company_name'.tr()),
+            ),
+            TextField(
+              controller: policyNumberCtrl,
+              decoration: InputDecoration(labelText: 'li_policy_number'.tr()),
+            ),
+            TextField(
+              controller: daysCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'li_days'.tr()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final notificationTime = tz.TZDateTime(
+                tz.local,
+                pickedDate.year,
+                pickedDate.month,
+                pickedDate.day,
+                pickedTime.hour,
+                pickedTime.minute,
+              );
+
+              if (notificationTime.isBefore(tz.TZDateTime.now(tz.local))) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('li_test_notification_error'.tr())),
+                );
+                return;
+              }
+
+              final body = 'li_maturity_notification_body'
+                  .tr()
+                  .replaceAll(
+                    '{0}',
+                    insuredCompanyNameCtrl.text.isEmpty
+                        ? 'Test Company'
+                        : insuredCompanyNameCtrl.text,
+                  )
+                  .replaceAll(
+                    '{1}',
+                    policyNumberCtrl.text.isEmpty
+                        ? '12345'
+                        : policyNumberCtrl.text,
+                  )
+                  .replaceAll(
+                    '{2}',
+                    daysCtrl.text.isEmpty ? '1' : daysCtrl.text,
+                  );
+
+              await flutterLocalNotificationsPlugin.zonedSchedule(
+                9999,
+                'li_maturity_notification_title'.tr(),
+                body,
+                notificationTime,
+                const NotificationDetails(
+                  android: AndroidNotificationDetails(
+                    'maturity_reminder_channel',
+                    'Maturity Reminders',
+                    channelDescription:
+                        'Notifications for Life Insurance maturity reminders',
+                    importance: Importance.max,
+                    priority: Priority.high,
+                  ),
+                ),
+                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                payload: '${'li_maturity_notification_title'.tr()}|$body',
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('li_test_notification_success'.tr())),
+              );
+            },
+            child: Text('save'.tr()),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -172,6 +375,17 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
               size: 30,
             ),
           ),
+          actions: [
+            IconButton(
+              onPressed: _scheduleTestNotification,
+              icon: const Icon(
+                Icons.notifications_active,
+                color: Colors.white,
+                size: 30,
+              ),
+              tooltip: 'li_test_notification'.tr(),
+            ),
+          ],
           backgroundColor: Colors.blue,
         ),
         body: Column(
@@ -412,6 +626,7 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 0),
                           child: DropdownButtonFormField<String>(
+                            isExpanded: true,
                             value: form.selectedCompany,
                             onChanged: (newVal) {
                               setState(() {

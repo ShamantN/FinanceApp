@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:revesion/hiveFunctions.dart';
 import 'package:revesion/hive_box_const.dart';
 import 'package:revesion/models/altInvestModel.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class AlternateInvestmentDetails extends StatefulWidget {
   const AlternateInvestmentDetails({super.key});
@@ -20,6 +24,8 @@ class _AlternateInvestmentDetailsState
   final List<AlternateInvestmentForm> _forms = [];
   final PageController _pageController = PageController(viewportFraction: 0.9);
   late final Box<AltInvestModel> _aiBox;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   final List<String> fundTypes = [
     'ai_fund_aif'.tr(),
@@ -93,6 +99,11 @@ class _AlternateInvestmentDetailsState
   void initState() {
     super.initState();
     _openAndLoadBox();
+    flutterLocalNotificationsPlugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
+    );
   }
 
   Future<void> _openAndLoadBox() async {
@@ -111,6 +122,9 @@ class _AlternateInvestmentDetailsState
           key, fundTypes, amcNames, investmentCategories, riskLevels);
       form.loadData(data!);
       _forms.add(form);
+      if (data.maturityDate != null) {
+        _scheduleMaturityNotifications(data, key);
+      }
     }
     setState(() {});
   }
@@ -133,7 +147,8 @@ class _AlternateInvestmentDetailsState
     });
   }
 
-  void _removeInvestment(int index) {
+  void _removeInvestment(int index) async {
+    await _cancelMaturityNotifications(_forms[index].key);
     setState(() {
       _aiBox.delete(_forms[index].key);
       _forms.removeAt(index);
@@ -150,12 +165,15 @@ class _AlternateInvestmentDetailsState
     }
   }
 
-  void _saveInvestment(int index) {
+  void _saveInvestment(int index) async {
     final form = _forms[index];
     if (form.formKey.currentState!.validate()) {
       final data = form.toAltInvestModel();
       try {
-        _aiBox.put(form.key, data);
+        await _aiBox.put(form.key, data);
+        if (data.maturityDate != null) {
+          await _scheduleMaturityNotifications(data, form.key);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('ai_save_success'.tr())),
         );
@@ -172,6 +190,181 @@ class _AlternateInvestmentDetailsState
         ),
       );
     }
+  }
+
+  Future<void> _scheduleMaturityNotifications(
+      AltInvestModel data, int key) async {
+    if (data.maturityDate == null) return;
+
+    final now = tz.TZDateTime.now(tz.local);
+    final maturityDate = tz.TZDateTime.from(data.maturityDate!, tz.local);
+
+    final intervals = [
+      const Duration(days: 7),
+      const Duration(days: 2),
+      const Duration(days: 1),
+    ];
+
+    for (var i = 0; i < intervals.length; i++) {
+      final notificationTime = maturityDate.subtract(intervals[i]);
+      if (notificationTime.isAfter(now)) {
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          key * 10 + i,
+          'ai_maturity_notification_title'.tr(),
+          'ai_maturity_notification_body'
+              .tr()
+              .replaceAll('{0}', data.nameOfAMC)
+              .replaceAll('{1}', data.folio)
+              .replaceAll('{2}', intervals[i].inDays.toString())
+              .replaceAll('{3}', data.expectedReturn.toString()),
+          notificationTime,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'maturity_reminder_channel',
+              'Maturity Reminders',
+              channelDescription:
+                  'Notifications for Alternate Investment maturity reminders',
+              importance: Importance.max,
+              priority: Priority.high,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          payload:
+              '${'ai_maturity_notification_title'.tr()}|${'ai_maturity_notification_body'.tr().replaceAll('{0}', data.nameOfAMC).replaceAll('{1}', data.folio).replaceAll('{2}', intervals[i].inDays.toString()).replaceAll('{3}', data.expectedReturn.toString())}',
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelMaturityNotifications(int key) async {
+    for (var i = 0; i < 3; i++) {
+      await flutterLocalNotificationsPlugin.cancel(key * 10 + i);
+    }
+  }
+
+  Future<void> _scheduleTestNotification() async {
+    final TextEditingController amcNameCtrl = TextEditingController();
+    final TextEditingController folioCtrl = TextEditingController();
+    final TextEditingController daysCtrl = TextEditingController();
+    final TextEditingController expectedReturnCtrl = TextEditingController();
+
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate == null) return;
+
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (pickedTime == null) return;
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('ai_test_notification'.tr()),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: amcNameCtrl,
+              decoration: InputDecoration(labelText: 'ai_amc_name'.tr()),
+            ),
+            TextField(
+              controller: folioCtrl,
+              decoration: InputDecoration(labelText: 'ai_folio_number'.tr()),
+            ),
+            TextField(
+              controller: daysCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'ai_days'.tr()),
+            ),
+            TextField(
+              controller: expectedReturnCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: 'ai_expected_return'.tr()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final notificationTime = tz.TZDateTime(
+                tz.local,
+                pickedDate.year,
+                pickedDate.month,
+                pickedDate.day,
+                pickedTime.hour,
+                pickedTime.minute,
+              );
+
+              if (notificationTime.isBefore(tz.TZDateTime.now(tz.local))) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('ai_test_notification_error'.tr())),
+                );
+                return;
+              }
+
+              final body = 'ai_maturity_notification_body'
+                  .tr()
+                  .replaceAll(
+                    '{0}',
+                    amcNameCtrl.text.isEmpty ? 'Test AMC' : amcNameCtrl.text,
+                  )
+                  .replaceAll(
+                    '{1}',
+                    folioCtrl.text.isEmpty ? '12345' : folioCtrl.text,
+                  )
+                  .replaceAll(
+                    '{2}',
+                    daysCtrl.text.isEmpty ? '1' : daysCtrl.text,
+                  )
+                  .replaceAll(
+                    '{3}',
+                    expectedReturnCtrl.text.isEmpty
+                        ? '5.0'
+                        : expectedReturnCtrl.text,
+                  );
+
+              await flutterLocalNotificationsPlugin.zonedSchedule(
+                9999,
+                'ai_maturity_notification_title'.tr(),
+                body,
+                notificationTime,
+                const NotificationDetails(
+                  android: AndroidNotificationDetails(
+                    'maturity_reminder_channel',
+                    'Maturity Reminders',
+                    channelDescription:
+                        'Notifications for Alternate Investment maturity reminders',
+                    importance: Importance.max,
+                    priority: Priority.high,
+                  ),
+                ),
+                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                payload: '${'ai_maturity_notification_title'.tr()}|$body',
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('ai_test_notification_success'.tr())),
+              );
+            },
+            child: Text('save'.tr()),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -230,6 +423,17 @@ class _AlternateInvestmentDetailsState
               size: 30,
             ),
           ),
+          actions: [
+            IconButton(
+              onPressed: _scheduleTestNotification,
+              icon: const Icon(
+                Icons.notifications_active,
+                color: Colors.white,
+                size: 30,
+              ),
+              tooltip: 'ai_test_notification'.tr(),
+            ),
+          ],
           backgroundColor: Colors.blue,
         ),
         body: Column(
