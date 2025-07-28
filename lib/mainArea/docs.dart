@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
-import 'package:revesion/bottomNavBar/navigationBar.dart';
 import 'package:revesion/hiveFunctions.dart';
 import 'package:revesion/hive_box_const.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -503,7 +502,6 @@ class _DocumentsState extends State<Documents> {
     }
     return Scaffold(
       backgroundColor: Colors.grey,
-      bottomNavigationBar: const CustomNavBar(navIndex: 1),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text(

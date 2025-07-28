@@ -109,6 +109,7 @@ flutter:
     - assets/photos/pf_logo.png
     - assets/photos/google_logo.png
     - assets/photos/app_logo.jpg
+    - assets/photos/drawer_logo.png
     - assets/translations/en.json
     - assets/translations/kn.json
 

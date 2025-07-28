@@ -77,9 +77,7 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
           key, insuranceCompanies, policyTypes, premiumFrequency);
       form.loadData(data!);
       _forms.add(form);
-      if (data.maturityDate != null) {
-        _scheduleMaturityNotifications(data, key);
-      }
+      _scheduleMaturityNotifications(data, key);
     }
     setState(() {});
   }
@@ -125,9 +123,7 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
     if (form.formKey.currentState!.validate()) {
       final data = form.toLifeInsurance();
       await _liBox.put(form.key, data);
-      if (data.maturityDate != null) {
-        await _scheduleMaturityNotifications(data, form.key);
-      }
+      await _scheduleMaturityNotifications(data, form.key);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('li_save_success'.tr())),
       );
@@ -136,10 +132,8 @@ class _LifeInsuranceDetailsState extends State<LifeInsuranceDetails> {
 
   Future<void> _scheduleMaturityNotifications(
       LifeInsurance data, int key) async {
-    if (data.maturityDate == null) return;
-
     final now = tz.TZDateTime.now(tz.local);
-    final maturityDate = tz.TZDateTime.from(data.maturityDate!, tz.local);
+    final maturityDate = tz.TZDateTime.from(data.maturityDate, tz.local);
 
     final intervals = [
       const Duration(days: 7),

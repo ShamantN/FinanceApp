@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:revesion/bottomNavBar/navigationBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:timezone/data/latest.dart' as tz;
@@ -8,7 +7,6 @@ import 'package:timezone/timezone.dart' as tz;
 import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:easy_localization/easy_localization.dart';
-import 'package:intl/intl.dart';
 
 // Payment Model
 class PaymentReminder {
@@ -141,24 +139,6 @@ class NotificationService {
     );
   }
 
-  static DateTime _getNextPaymentDate(DateTime paymentDate) {
-    final now = DateTime.now();
-    final day = paymentDate.day;
-    const hour = 9;
-    const minute = 0;
-
-    DateTime nextPayment = DateTime(now.year, now.month, day, hour, minute);
-    if (nextPayment.isBefore(now)) {
-      nextPayment = DateTime(now.year, now.month + 1, day, hour, minute);
-    }
-
-    while (nextPayment.month != (now.month + 1) % 12) {
-      nextPayment = nextPayment.subtract(const Duration(days: 1));
-    }
-
-    return nextPayment;
-  }
-
   static tz.TZDateTime _convertToTZDateTime(DateTime dateTime) {
     final location = tz.local;
     return tz.TZDateTime.from(dateTime, location);
@@ -216,9 +196,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
       _checkAndCleanPastReminders();
     });
   }
-
-  final FlutterLocalNotificationsPlugin _notifications =
-      FlutterLocalNotificationsPlugin();
 
   Future<void> _initializeNotifications() async {
     await NotificationService.initialize();
@@ -367,8 +344,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false, // Prevent keyboard from resizing content
-      bottomNavigationBar: const CustomNavBar(navIndex: 2),
       appBar: AppBar(
         toolbarHeight: 80,
         shape: const RoundedRectangleBorder(

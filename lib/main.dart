@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:revesion/firebase_options.dart';
+import 'package:revesion/main_screen.dart';
 import 'package:revesion/models/altInvestModel.dart';
 import 'package:revesion/models/bankModel.dart';
 import 'package:revesion/models/document_model.dart';
@@ -102,7 +103,7 @@ class MyApp extends StatelessWidget {
             );
           }
           if (snapshot.data != null) {
-            return const SelectOption();
+            return const MainScreen();
           } else {
             return const Login();
           }

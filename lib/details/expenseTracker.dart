@@ -1,8 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:revesion/fomatters/formats.dart';
 import 'package:revesion/hiveFunctions.dart';
 import 'package:revesion/hive_box_const.dart';
 import 'package:revesion/models/transactions.dart';
@@ -18,7 +20,7 @@ class FinanceTrackerPage extends StatefulWidget {
 class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
   late Box<Transaction> _transactionBox;
   late Box<double> _balanceBox;
-  late Box<bool> _flagBox; // New box for boolean flags
+  late Box<bool> _flagBox;
   final int _currentIndex = 0;
   double _initialBalance = 0.0;
   bool _isBalanceSet = false;
@@ -48,11 +50,10 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
     _transactionBox =
         await HiveFunctions.openBox<Transaction>(expenseBoxWithUid(uid));
     _balanceBox = await HiveFunctions.openBox<double>('balanceBox_$uid');
-    _flagBox = await HiveFunctions.openBox<bool>(
-        'flagBox_$uid'); // Initialize flag box
+    _flagBox = await HiveFunctions.openBox<bool>('flagBox_$uid');
 
     setState(() {
-      _transactions = HiveFunctions.readData(_transactionBox);
+      _transactions = HiveFunctions.readData<Transaction>(_transactionBox);
       _initialBalance =
           _balanceBox.get('initialBalance', defaultValue: 0.0) ?? 0.0;
       _isBalanceSet =
@@ -81,14 +82,14 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
   }
 
   void _deleteTransaction(int index) async {
-    await HiveFunctions.delData(_transactionBox, index);
+    await HiveFunctions.delData<Transaction>(_transactionBox, index);
     setState(() {
-      _transactions = HiveFunctions.readData(_transactionBox);
+      _transactions = HiveFunctions.readData<Transaction>(_transactionBox);
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Transaction deleted successfully!'),
-        backgroundColor: Color(0xFF2E7D32),
+      SnackBar(
+        content: Text('expense_tracker_delete_success'.tr()),
+        backgroundColor: const Color(0xFF2E7D32),
       ),
     );
   }
@@ -98,20 +99,17 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
-            'Reset All Data?',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          title: Text(
+            'expense_tracker_reset_title'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: const Text(
-              'Are you sure you want to clear all your transactions and reset the balance? This action cannot be undone.'),
+          content: Text('expense_tracker_reset_content'.tr()),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text('expense_tracker_cancel'.tr()),
             ),
-            const SizedBox(
-              width: 125,
-            ),
+            const SizedBox(width: 125),
             ElevatedButton(
               onPressed: () async {
                 await _transactionBox.clear();
@@ -124,16 +122,19 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                 });
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('All data reset successfully!'),
-                    backgroundColor: Color(0xFF2E7D32),
+                  SnackBar(
+                    content: Text('expense_tracker_reset_success'.tr()),
+                    backgroundColor: const Color(0xFF2E7D32),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
               ),
-              child: const Text('Reset', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'expense_tracker_reset'.tr(),
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -160,15 +161,16 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.arrow_back_ios)),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(Icons.arrow_back_ios),
+        ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 2,
-        title: const Text(
-          'Puttannaiah Foundation',
-          style: TextStyle(
+        title: Text(
+          'expense_tracker_appbar_title'.tr(),
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -223,9 +225,9 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                 color: Color(0xFF2E7D32),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Welcome to Finance Tracker',
-                style: TextStyle(
+              Text(
+                'expense_tracker_welcome'.tr(),
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF2E7D32),
@@ -234,7 +236,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Enter your initial balance to get started',
+                'expense_tracker_initial_balance_prompt'.tr(),
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -245,7 +247,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
               TextField(
                 controller: balanceController,
                 decoration: InputDecoration(
-                  labelText: 'Initial Balance',
+                  labelText: 'expense_tracker_initial_balance'.tr(),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -271,8 +273,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                             double.tryParse(balanceController.text) ?? 0.0;
                         _isBalanceSet = true;
                         _balanceBox.put('initialBalance', _initialBalance);
-                        _flagBox.put('isBalanceSet',
-                            _isBalanceSet); // Use flagBox for boolean
+                        _flagBox.put('isBalanceSet', _isBalanceSet);
                       });
                     }
                   },
@@ -282,9 +283,9 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    'Get Started',
-                    style: TextStyle(
+                  child: Text(
+                    'expense_tracker_get_started'.tr(),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -307,11 +308,11 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Edit Initial Balance'),
+          title: Text('expense_tracker_edit_balance'.tr()),
           content: TextField(
             controller: balanceController,
             decoration: InputDecoration(
-              labelText: 'Initial Balance',
+              labelText: 'expense_tracker_initial_balance'.tr(),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -322,7 +323,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text('expense_tracker_cancel'.tr()),
             ),
             ElevatedButton(
               onPressed: () {
@@ -334,9 +335,9 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                   });
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Balance updated successfully!'),
-                      backgroundColor: Color(0xFF2E7D32),
+                    SnackBar(
+                      content: Text('expense_tracker_balance_updated'.tr()),
+                      backgroundColor: const Color(0xFF2E7D32),
                     ),
                   );
                 }
@@ -344,8 +345,10 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2E7D32),
               ),
-              child:
-                  const Text('Update', style: TextStyle(color: Colors.white)),
+              child: Text(
+                'expense_tracker_update'.tr(),
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -365,8 +368,8 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title:
-                  const Text('Add Transaction', style: TextStyle(fontSize: 18)),
+              title: Text('expense_tracker_add_transaction'.tr(),
+                  style: const TextStyle(fontSize: 18)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -374,7 +377,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                     DropdownButtonFormField<String>(
                       value: selectedType,
                       decoration: InputDecoration(
-                        labelText: 'Type',
+                        labelText: 'expense_tracker_type'.tr(),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -382,8 +385,8 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                       items: ['Income', 'Expense'].map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child:
-                              Text(value, style: const TextStyle(fontSize: 14)),
+                          child: Text('expense_tracker_$value'.tr(),
+                              style: const TextStyle(fontSize: 14)),
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
@@ -396,7 +399,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                     TextField(
                       controller: amountController,
                       decoration: InputDecoration(
-                        labelText: 'Amount',
+                        labelText: 'expense_tracker_amount'.tr(),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -410,7 +413,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                     TextField(
                       controller: descriptionController,
                       decoration: InputDecoration(
-                        labelText: 'Description',
+                        labelText: 'expense_tracker_description'.tr(),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -421,7 +424,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                     DropdownButtonFormField<String>(
                       value: selectedIconName,
                       decoration: InputDecoration(
-                        labelText: 'Category Icon',
+                        labelText: 'expense_tracker_category_icon'.tr(),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -433,7 +436,8 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                             children: [
                               Icon(iconMap[key], size: 16),
                               const SizedBox(width: 6),
-                              Text(key, style: const TextStyle(fontSize: 12)),
+                              Text('expense_tracker_category_$key'.tr(),
+                                  style: const TextStyle(fontSize: 12)),
                             ],
                           ),
                         );
@@ -452,7 +456,8 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Cancel', style: TextStyle(fontSize: 14)),
+                  child: Text('expense_tracker_cancel'.tr(),
+                      style: const TextStyle(fontSize: 14)),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -470,18 +475,18 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                           date: DateTime.now(),
                         );
 
-                        await HiveFunctions.addItem(
+                        await HiveFunctions.addItem<Transaction>(
                             _transactionBox, newTransaction);
                         setState(() {
-                          _transactions =
-                              HiveFunctions.readData(_transactionBox);
+                          _transactions = HiveFunctions.readData<Transaction>(
+                              _transactionBox);
                         });
 
                         Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Transaction added successfully!'),
-                            backgroundColor: Color(0xFF2E7D32),
+                          SnackBar(
+                            content: Text('expense_tracker_add_success'.tr()),
+                            backgroundColor: const Color(0xFF2E7D32),
                           ),
                         );
                       }
@@ -493,8 +498,10 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('Add',
-                      style: TextStyle(color: Colors.white, fontSize: 14)),
+                  child: Text(
+                    'expense_tracker_add'.tr(),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
                 ),
               ],
             );
@@ -548,8 +555,8 @@ class HomeScreen extends StatelessWidget {
                 child: GestureDetector(
                   onTap: onEditBalance,
                   child: _buildBalanceCard(
-                    'Total Balance',
-                    '₹${totalBalance.toStringAsFixed(0)}',
+                    'expense_tracker_total_balance'.tr(),
+                    NumberFormatter.formatIndianCurrency(totalBalance),
                     totalBalance >= 0 ? Colors.green : Colors.red,
                     Icons.account_balance_wallet,
                   ),
@@ -558,8 +565,8 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildBalanceCard(
-                  'Monthly Expense',
-                  '₹${monthlyExpense.toStringAsFixed(0)}',
+                  'expense_tracker_monthly_expense'.tr(),
+                  NumberFormatter.formatIndianCurrency(monthlyExpense),
                   Colors.red,
                   Icons.trending_down,
                 ),
@@ -571,7 +578,7 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recent Transactions',
+                'expense_tracker_recent_transactions'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -579,7 +586,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                '${transactions.length} transactions',
+                "${transactions.length} transactions",
                 style: TextStyle(
                   fontSize: 10,
                   color: Colors.grey[600],
@@ -596,14 +603,14 @@ class HomeScreen extends StatelessWidget {
                   Icon(Icons.receipt_long, size: 40, color: Colors.grey[400]),
                   const SizedBox(height: 12),
                   Text(
-                    'No transactions yet',
+                    'expense_tracker_no_transactions'.tr(),
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
                     ),
                   ),
                   Text(
-                    'Tap the + button to add your first transaction',
+                    'expense_tracker_add_transaction_prompt'.tr(),
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.grey[500],
@@ -627,14 +634,14 @@ class HomeScreen extends StatelessWidget {
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                       icon: Icons.delete,
-                      label: 'Delete',
+                      label: 'expense_tracker_delete'.tr(),
                     ),
                   ],
                 ),
                 child: _buildTransactionItem(
                   transaction.title,
-                  '₹${transaction.amount.toStringAsFixed(0)}',
-                  transaction.type,
+                  NumberFormatter.formatIndianCurrency(transaction.amount),
+                  'expense_tracker_${transaction.type}'.tr(),
                   iconMap[transaction.iconName] ?? Icons.more_horiz,
                   transaction.type == 'Income' ? Colors.green : Colors.red,
                 ),

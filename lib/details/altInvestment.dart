@@ -122,9 +122,7 @@ class _AlternateInvestmentDetailsState
           key, fundTypes, amcNames, investmentCategories, riskLevels);
       form.loadData(data!);
       _forms.add(form);
-      if (data.maturityDate != null) {
-        _scheduleMaturityNotifications(data, key);
-      }
+      _scheduleMaturityNotifications(data, key);
     }
     setState(() {});
   }
@@ -171,9 +169,7 @@ class _AlternateInvestmentDetailsState
       final data = form.toAltInvestModel();
       try {
         await _aiBox.put(form.key, data);
-        if (data.maturityDate != null) {
-          await _scheduleMaturityNotifications(data, form.key);
-        }
+        await _scheduleMaturityNotifications(data, form.key);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('ai_save_success'.tr())),
         );
@@ -194,10 +190,8 @@ class _AlternateInvestmentDetailsState
 
   Future<void> _scheduleMaturityNotifications(
       AltInvestModel data, int key) async {
-    if (data.maturityDate == null) return;
-
     final now = tz.TZDateTime.now(tz.local);
-    final maturityDate = tz.TZDateTime.from(data.maturityDate!, tz.local);
+    final maturityDate = tz.TZDateTime.from(data.maturityDate, tz.local);
 
     final intervals = [
       const Duration(days: 7),

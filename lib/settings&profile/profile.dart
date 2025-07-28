@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:revesion/bottomNavBar/navigationBar.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -488,9 +487,6 @@ class _ProfileState extends State<Profile> {
                     "Cancel",
                     style: TextStyle(color: Colors.red),
                   )),
-              const SizedBox(
-                width: 110,
-              ),
               ElevatedButton(
                   onPressed: () {
                     _changePassword(currentPwdCtrl, newPwdCtrl);
@@ -521,7 +517,6 @@ class _ProfileState extends State<Profile> {
         ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
       ),
       child: Scaffold(
-        bottomNavigationBar: const CustomNavBar(navIndex: 3),
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           centerTitle: true,

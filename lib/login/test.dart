@@ -15,8 +15,6 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  late Locale _pageLocale;
-
   final String serverClientId =
       "557308803278-ovkm3kbkqpuukubctf0b91p9h1clckjk.apps.googleusercontent.com";
 
@@ -288,9 +286,6 @@ class _LoginState extends State<Login> {
                     style: TextStyle(
                         color: Colors.red, fontWeight: FontWeight.bold),
                   )),
-              const SizedBox(
-                width: 90,
-              ),
               ElevatedButton(
                   onPressed: () async {
                     final correctEmail = forgotPwdSubmitForm();

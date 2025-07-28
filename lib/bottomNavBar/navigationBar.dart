@@ -1,36 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:revesion/mainArea/docs.dart';
-import 'package:revesion/mainArea/notifications.dart';
-import 'package:revesion/mainArea/selection.dart';
-import 'package:revesion/settings&profile/profile.dart';
 
 class CustomNavBar extends StatelessWidget {
   final int navIndex;
-  const CustomNavBar({super.key, required this.navIndex});
+  final Function(int) onTabChange;
 
-  void _onTap(BuildContext context, int index) {
-    if (index == navIndex) return;
-    late Widget dest;
-    switch (index) {
-      case 0:
-        dest = const SelectOption();
-        break;
-      case 1:
-        dest = const Documents();
-        break;
-      case 2:
-        dest = const NotificationsPage();
-        break;
-      case 3:
-        dest = const Profile();
-        break;
-    }
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => dest),
-    );
-  }
+  const CustomNavBar({
+    super.key,
+    required this.navIndex,
+    required this.onTabChange,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,17 +22,24 @@ class CustomNavBar extends StatelessWidget {
         ),
         boxShadow: [BoxShadow(blurRadius: 20, color: Colors.black12)],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
       child: GNav(
+        tabActiveBorder: Border(
+            top: BorderSide(color: Colors.black, width: 2),
+            bottom: BorderSide(color: Colors.black, width: 2),
+            left: BorderSide(color: Colors.black, width: 2),
+            right: BorderSide(color: Colors.black, width: 2)),
+
+        rippleColor: Colors.greenAccent,
         gap: 8,
         activeColor: Colors.black,
         color: Colors.grey[800],
         iconSize: 28,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        duration: const Duration(milliseconds: 800),
-        tabBackgroundColor: Colors.white,
+        duration: const Duration(milliseconds: 400),
+        tabBackgroundColor: Colors.grey,
         selectedIndex: navIndex,
-        onTabChange: (idx) => _onTap(context, idx),
+        onTabChange: onTabChange, // Use the callback
         tabs: const [
           GButton(
             icon: Icons.home_rounded,
