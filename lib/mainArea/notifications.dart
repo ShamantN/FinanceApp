@@ -232,7 +232,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     if (_titleController.text.isEmpty || _amountController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('notifications_fill_all_fields').tr()),
+        SnackBar(
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            content: Text('notifications_fill_all_fields').tr()),
       );
       return;
     }
@@ -240,7 +243,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
     if (selectedNotificationTime.isBefore(now) ||
         selectedNotificationTime.isAtSameMomentAs(now)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('notifications_future_time').tr()),
+        SnackBar(
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            content: Text('notifications_future_time').tr()),
       );
       return;
     }
@@ -269,7 +275,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _selectedTime = DateTime.now();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('notifications_success').tr()),
+      SnackBar(
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          content: Text('notifications_success').tr()),
     );
   }
 
@@ -293,6 +302,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        behavior: SnackBarBehavior.floating,
         content: Text(
           updatedReminder.isActive
               ? 'notifications_enable'
@@ -312,7 +322,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('notifications_delete').tr()),
+      SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('notifications_delete').tr()),
     );
   }
 
@@ -335,7 +347,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       _saveReminders();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('notifications_removed_expired').tr()),
+          SnackBar(
+              behavior: SnackBarBehavior.floating,
+              content: Text('notifications_removed_expired').tr()),
         );
       }
     }
@@ -343,334 +357,312 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false, // Prevent keyboard from resizing content
-      appBar: AppBar(
-        toolbarHeight: 80,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(16),
-            bottomRight: Radius.circular(16),
-          ),
-        ),
-        elevation: 10,
-        title: const Text(
-          'select_option_title',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ).tr(),
-        backgroundColor: Colors.blue.shade600,
-        foregroundColor: Colors.black,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              margin: const EdgeInsets.only(bottom: 16.0),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12.0),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'notifications_add_button',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700,
-                    ),
-                  ).tr(),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _titleController,
-                    decoration: InputDecoration(
-                      labelText: 'notifications_payment_title'.tr(),
-                      hintText: 'notifications_payment_title_hint'.tr(),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _amountController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: 'notifications_amount'.tr(),
-                      hintText: 'notifications_amount_hint'.tr(),
-                      prefixText: '₹',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedType,
-                          decoration: InputDecoration(
-                            labelText: 'notifications_type'.tr(),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          items: [
-                            DropdownMenuItem(
-                                value: 'insurance',
-                                child:
-                                    Text('notifications_type_insurance').tr()),
-                            DropdownMenuItem(
-                                value: 'loan',
-                                child: Text('notifications_type_loan').tr()),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedType = value!;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: _selectedDate,
-                              firstDate: DateTime.now(),
-                              lastDate:
-                                  DateTime.now().add(const Duration(days: 365)),
-                            );
-                            if (date != null) {
-                              setState(() {
-                                _selectedDate = date;
-                              });
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade400),
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            child: Text(
-                              DateFormat('MMM dd, yyyy').format(_selectedDate),
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            final time = await showTimePicker(
-                              context: context,
-                              initialTime:
-                                  TimeOfDay.fromDateTime(_selectedTime),
-                            );
-                            if (time != null) {
-                              setState(() {
-                                _selectedTime = DateTime(
-                                  _selectedDate.year,
-                                  _selectedDate.month,
-                                  _selectedDate.day,
-                                  time.hour,
-                                  time.minute,
-                                );
-                              });
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade400),
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            child: Text(
-                              DateFormat('HH:mm').format(_selectedTime),
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _addReminder,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade600,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      child: const Text('notifications_add_button',
-                              style: TextStyle(fontSize: 16))
-                          .tr(),
-                    ),
-                  ),
-                ],
-              ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            margin: const EdgeInsets.only(bottom: 16.0),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12.0),
+              border: Border.all(color: Colors.grey.shade300),
             ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.5,
-              child: _reminders.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.notifications_off,
-                            size: 64,
-                            color: Colors.grey.shade400,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'notifications_add_button',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade700,
+                  ),
+                ).tr(),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText: 'notifications_payment_title'.tr(),
+                    hintText: 'notifications_payment_title_hint'.tr(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _amountController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'notifications_amount'.tr(),
+                    hintText: 'notifications_amount_hint'.tr(),
+                    prefixText: '₹',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedType,
+                        decoration: InputDecoration(
+                          labelText: 'notifications_type'.tr(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'notifications_no_reminders',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey.shade600,
-                            ),
-                          ).tr(),
-                          const SizedBox(height: 8),
-                          Text(
-                            'notifications_add_first',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade500,
-                            ),
-                          ).tr(),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                              value: 'insurance',
+                              child: Text('notifications_type_insurance').tr()),
+                          DropdownMenuItem(
+                              value: 'loan',
+                              child: Text('notifications_type_loan').tr()),
                         ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedType = value!;
+                          });
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.all(16.0),
-                      itemCount: _reminders.length,
-                      itemBuilder: (context, index) {
-                        final reminder = _reminders[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12.0),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedDate,
+                            firstDate: DateTime.now(),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (date != null) {
+                            setState(() {
+                              _selectedDate = date;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(8.0),
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16.0),
-                            leading: CircleAvatar(
-                              backgroundColor: reminder.isActive
-                                  ? Colors.green.shade100
-                                  : Colors.grey.shade200,
-                              child: Icon(
-                                reminder.type == 'insurance'
-                                    ? Icons.security
-                                    : Icons.account_balance,
-                                color: reminder.isActive
-                                    ? Colors.green.shade600
-                                    : Colors.grey.shade600,
-                              ),
+                          child: Text(
+                            DateFormat('MMM dd, yyyy').format(_selectedDate),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.fromDateTime(_selectedTime),
+                          );
+                          if (time != null) {
+                            setState(() {
+                              _selectedTime = DateTime(
+                                _selectedDate.year,
+                                _selectedDate.month,
+                                _selectedDate.day,
+                                time.hour,
+                                time.minute,
+                              );
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Text(
+                            DateFormat('HH:mm').format(_selectedTime),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _addReminder,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    child: const Text('notifications_add_button',
+                            style: TextStyle(fontSize: 16))
+                        .tr(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: _reminders.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.notifications_off,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'notifications_no_reminders',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                        ).tr(),
+                        const SizedBox(height: 8),
+                        Text(
+                          'notifications_add_first',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                        ).tr(),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: _reminders.length,
+                    itemBuilder: (context, index) {
+                      final reminder = _reminders[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12.0),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16.0),
+                          leading: CircleAvatar(
+                            backgroundColor: reminder.isActive
+                                ? Colors.green.shade100
+                                : Colors.grey.shade200,
+                            child: Icon(
+                              reminder.type == 'insurance'
+                                  ? Icons.security
+                                  : Icons.account_balance,
+                              color: reminder.isActive
+                                  ? Colors.green.shade600
+                                  : Colors.grey.shade600,
                             ),
-                            title: Text(
-                              reminder.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                          ),
+                          title: Text(
+                            reminder.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  '₹${reminder.amount.toStringAsFixed(2)}',
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                '₹${reminder.amount.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.green.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Due: ${DateFormat('MMM dd').format(reminder.paymentDate)} (Monthly)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                  vertical: 2.0,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: reminder.isActive
+                                      ? Colors.green.shade100
+                                      : Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Text(
+                                  reminder.isActive
+                                      ? 'notifications_active'
+                                      : 'notifications_inactive',
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.green.shade700,
+                                    fontSize: 10,
+                                    color: reminder.isActive
+                                        ? Colors.green.shade800
+                                        : Colors.grey.shade600,
                                     fontWeight: FontWeight.w500,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Due: ${DateFormat('MMM dd').format(reminder.paymentDate)} (Monthly)',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0,
-                                    vertical: 2.0,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: reminder.isActive
-                                        ? Colors.green.shade100
-                                        : Colors.grey.shade200,
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                  child: Text(
-                                    reminder.isActive
-                                        ? 'notifications_active'
-                                        : 'notifications_inactive',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: reminder.isActive
-                                          ? Colors.green.shade800
-                                          : Colors.grey.shade600,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ).tr(),
-                                ),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    reminder.isActive
-                                        ? Icons.pause_circle_filled
-                                        : Icons.play_circle_filled,
-                                    color: reminder.isActive
-                                        ? Colors.orange.shade600
-                                        : Colors.green.shade600,
-                                  ),
-                                  onPressed: () => _toggleReminder(reminder),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete,
-                                    color: Colors.red.shade600,
-                                  ),
-                                  onPressed: () => _deleteReminder(reminder),
-                                ),
-                              ],
-                            ),
+                                ).tr(),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  reminder.isActive
+                                      ? Icons.pause_circle_filled
+                                      : Icons.play_circle_filled,
+                                  color: reminder.isActive
+                                      ? Colors.orange.shade600
+                                      : Colors.green.shade600,
+                                ),
+                                onPressed: () => _toggleReminder(reminder),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.delete,
+                                  color: Colors.red.shade600,
+                                ),
+                                onPressed: () => _deleteReminder(reminder),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }

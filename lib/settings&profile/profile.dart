@@ -77,10 +77,12 @@ class _ProfileState extends State<Profile> {
       });
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
           content: Text("Profile updated successfully!")));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
           content: Text("Error: ${e.toString()}")));
     }
   }
@@ -94,6 +96,7 @@ class _ProfileState extends State<Profile> {
       if (!docSnapshot.exists) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
             content: Text("User document does not exist.")));
         return;
       }
@@ -115,8 +118,10 @@ class _ProfileState extends State<Profile> {
         }
       });
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          content: Text("Error: ${e.toString()}")));
     }
   }
 
@@ -317,6 +322,7 @@ class _ProfileState extends State<Profile> {
     if (!_hasPasswordProvider()) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        behavior: SnackBarBehavior.floating,
         content: Text(
             "You signed up with Google and don't have a password. Password changes are not available."),
         backgroundColor: Colors.red,
@@ -338,6 +344,7 @@ class _ProfileState extends State<Profile> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Please Fill In All The Fields!"),
+        behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.red,
       ));
       return;
@@ -353,6 +360,7 @@ class _ProfileState extends State<Profile> {
 
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
           content: Text(
             "Your Password Has Been Updated Successfully!",
           )));
@@ -360,6 +368,7 @@ class _ProfileState extends State<Profile> {
       if (e.code == 'weak-password') {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
             content: Text('Please Enter A Stronger Password.')));
         Navigator.pop(context);
       } else if (e.code == 'requires-recent-login') {
@@ -371,6 +380,7 @@ class _ProfileState extends State<Profile> {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
+              behavior: SnackBarBehavior.floating,
               content: Text("Your Password Has Been Updated Successfully!"),
               backgroundColor: Colors.green,
             ),
@@ -379,6 +389,7 @@ class _ProfileState extends State<Profile> {
           if (reAuthError.code == 'wrong-password') {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
+                behavior: SnackBarBehavior.floating,
                 content: Text("Please Enter The Correct CURRENT passoword"),
                 backgroundColor: Colors.red,
               ),
@@ -388,6 +399,7 @@ class _ProfileState extends State<Profile> {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
+                behavior: SnackBarBehavior.floating,
                 content: Text("Error: ${reAuthError.message}"),
                 backgroundColor: Colors.red,
               ),
@@ -397,6 +409,7 @@ class _ProfileState extends State<Profile> {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+              behavior: SnackBarBehavior.floating,
               content: Text("Error: ${error.toString()}"),
               backgroundColor: Colors.red,
             ),
@@ -407,6 +420,7 @@ class _ProfileState extends State<Profile> {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          behavior: SnackBarBehavior.floating,
           content: Text("An Unexpected Error Has Occured: ${e.toString()}"),
           backgroundColor: Colors.red,
         ),
@@ -422,7 +436,7 @@ class _ProfileState extends State<Profile> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            backgroundColor: Colors.grey[800],
+            backgroundColor: Colors.grey[900],
             icon: const Icon(
               Icons.change_circle,
               size: 35,
@@ -502,140 +516,136 @@ class _ProfileState extends State<Profile> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [
-          Color(0xFF0B0F33),
-          Color(0xFF1C1F6B),
-          Color(0xFF2C3E91),
-          Color(0xFF5369D6),
-        ], stops: [
-          0.0,
-          0.4,
-          0.75,
-          1.0
-        ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          centerTitle: true,
-          title: const Text(
-            "Edit Profile",
-            style: TextStyle(
-                fontFamily: 'Helvetica',
-                fontWeight: FontWeight.bold,
-                fontSize: 40,
-                color: Colors.white),
-          ),
-          backgroundColor: Colors.transparent,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(colors: [
+            Color(0xFF0B0F33),
+            Color(0xFF1C1F6B),
+            Color(0xFF2C3E91),
+            Color(0xFF5369D6),
+          ], stops: [
+            0.0,
+            0.4,
+            0.75,
+            1.0
+          ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         ),
-        body: ListView(
-          physics: const BouncingScrollPhysics(),
-          children: [
-            Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 90,
-                    backgroundColor: Colors.black,
-                    child: GestureDetector(
-                      onLongPress: () {
-                        HapticFeedback.mediumImpact();
-                      },
-                      child: CircleAvatar(
-                        radius: 86,
-                        backgroundImage: photoUrl != null
-                            ? NetworkImage(photoUrl!)
-                            : const AssetImage('assets/photos/pp.jpg'),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Form(
-              key: _formKey,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            HapticFeedback.lightImpact();
+            await getUserData();
+          },
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            children: [
+              Center(
+                child: Stack(
                   children: [
-                    _buildSectionHeader('Personal Information'),
-                    _buildTextField(
-                        true, 20, _nameCtrl, 'Name', Icons.person_outline),
-                    _buildTextField(
-                        false, 20, _emailCtrl, 'Email', Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress),
-                    _buildDateField(),
-                    _buildTextField(
-                        false, 5, _pwdCtrl, 'Password', Icons.lock_outline,
-                        obscureText: true),
-                    GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          showChangePwdDialog();
+                    CircleAvatar(
+                      radius: 90,
+                      backgroundColor: Colors.black,
+                      child: GestureDetector(
+                        onLongPress: () {
+                          HapticFeedback.mediumImpact();
                         },
-                        child: const Text(
-                          "Change password?",
-                          style: TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        )),
-                    const SizedBox(height: 30),
-                    _buildSectionHeader('Contact Information'),
-                    _buildTextField(true, 20, _phoneCtrl, 'Phone Number',
-                        Icons.phone_outlined,
-                        keyboardType: TextInputType.phone),
-                    _buildCountryField(
-                        'Select your country', 'Country', countires),
-                    _buildCountryField('Select your state', 'State', states),
-                    const SizedBox(height: 40),
-                    Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.deepPurple, Colors.purple[300]!],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.deepPurple.withOpacity(0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await updateUserData();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: const Text(
-                          "Save Changes",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        child: CircleAvatar(
+                          radius: 86,
+                          backgroundImage: photoUrl != null
+                              ? NetworkImage(photoUrl!)
+                              : const AssetImage('assets/photos/pp.jpg'),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              Form(
+                key: _formKey,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionHeader('Personal Information'),
+                      _buildTextField(
+                          true, 20, _nameCtrl, 'Name', Icons.person_outline),
+                      _buildTextField(
+                          false, 20, _emailCtrl, 'Email', Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress),
+                      _buildDateField(),
+                      _buildTextField(
+                          false, 5, _pwdCtrl, 'Password', Icons.lock_outline,
+                          obscureText: true),
+                      GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            showChangePwdDialog();
+                          },
+                          child: const Text(
+                            "Change password?",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          )),
+                      const SizedBox(height: 30),
+                      _buildSectionHeader('Contact Information'),
+                      _buildTextField(true, 20, _phoneCtrl, 'Phone Number',
+                          Icons.phone_outlined,
+                          keyboardType: TextInputType.phone),
+                      _buildCountryField(
+                          'Select your country', 'Country', countires),
+                      _buildCountryField('Select your state', 'State', states),
+                      const SizedBox(height: 40),
+                      Container(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.deepPurple, Colors.purple[300]!],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.deepPurple.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await updateUserData();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            "Save Changes",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

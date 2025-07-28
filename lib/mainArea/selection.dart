@@ -15,8 +15,6 @@ import 'package:revesion/fomatters/formats.dart';
 import 'package:revesion/hiveFunctions.dart';
 import 'package:revesion/hive_box_const.dart';
 import 'package:revesion/models/transactions.dart';
-import 'package:revesion/settings&profile/profile.dart';
-import 'package:revesion/settings&profile/settings.dart';
 import 'package:revesion/details/altInvestment.dart';
 import 'selectionWidgets.dart';
 
@@ -123,377 +121,221 @@ class _SelectOptionState extends State<SelectOption> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawerEdgeDragWidth: 75,
-      drawer: Drawer(
-          backgroundColor: Colors.grey[900],
-          elevation: 10,
-          child: ListView(
-            children: [
-              Container(
-                padding: EdgeInsets.only(bottom: 10),
-                height: 180,
-                child: Center(
-                    child: Image.asset(
-                  'assets/photos/pf_logo.png',
-                )),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(left: 15, right: 15),
-                child: Divider(
-                  color: Colors.black,
-                ),
-              ),
-              ListTile(
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (_) => Profile()));
-                },
-                iconColor: Colors.black,
-                leading: Icon(
-                  Icons.person,
-                  size: 30,
-                ),
-                title: Text(
-                  "Profile",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white70,
-                      fontSize: 20),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(left: 15, right: 15),
-                child: Divider(
-                  color: Colors.black,
-                ),
-              ),
-              ListTile(
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (_) => Settings()));
-                },
-                iconColor: Colors.black,
-                leading: Icon(
-                  Icons.settings,
-                  size: 30,
-                ),
-                title: Text(
-                  "Settings",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white70,
-                      fontSize: 20),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(left: 15, right: 15),
-                child: Divider(
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(
-                  height: MediaQuery.of(context).size.height -
-                      450), // Adjust height dynamically
-              ListTile(
-                onTap: () {
-                  showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          backgroundColor: Colors.grey[900],
-                          elevation: 10,
-                          icon: const Icon(
-                            Icons.logout,
-                            size: 30,
-                          ),
-                          title: Text(
-                            "Logout",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white70,
-                                fontSize: 20),
-                          ),
-                          content: Text(
-                              "Are you sure you want to logout? You will be required to login again."),
-                          contentTextStyle: TextStyle(color: Colors.white70),
-                          actions: [
-                            TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Text(
-                                  "Cancel",
-                                  style: TextStyle(color: Colors.white70),
-                                )),
-                            ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    FirebaseAuth.instance.signOut();
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                child: Text(
-                                  "Logout",
-                                  style: TextStyle(color: Colors.red),
-                                ))
-                          ],
-                        );
-                      });
-                },
-                iconColor: Colors.black,
-                leading: Icon(
-                  Icons.logout,
-                  size: 30,
-                ),
-                title: Text(
-                  "Logout",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white70,
-                      fontSize: 20),
-                ),
-              ),
-            ],
-          )),
-      backgroundColor: const Color.fromARGB(255, 172, 198, 187),
-      appBar: AppBar(
-        title: const Text("select_option_title").tr(),
-        centerTitle: true,
-        titleTextStyle: const TextStyle(
-          fontFamily: 'Helvetica',
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-          fontSize: 30,
-        ),
-        backgroundColor: const Color(0xFF00C172),
-        elevation: 0,
-        shadowColor: Colors.transparent,
-      ),
-      body: FutureBuilder<void>(
-        future: _localeChangeFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return Container(
-            decoration: const BoxDecoration(color: Color(0xFF00C172)),
-            child: Center(
-              child: Column(
-                children: [
-                  Expanded(
-                    flex: 1,
-                    child: Center(
-                      child: Container(
-                        alignment: Alignment.center,
-                        color: const Color(0xFF00C172),
-                        width: double.infinity,
-                        height: double.infinity,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: 40, top: 20),
-                              child: IntrinsicHeight(
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Column(
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(Icons.account_balance,
-                                                size: 18,
-                                                color: Colors.grey[850]),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'expense_tracker_total_balance'
-                                                  .tr(),
-                                              style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[850]),
-                                            ),
-                                          ],
-                                        ),
-                                        if (_isDataLoaded)
+    return FutureBuilder<void>(
+      future: _localeChangeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return Container(
+          decoration: const BoxDecoration(color: Color(0xFF00C172)),
+          child: Center(
+            child: Column(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child: Container(
+                      alignment: Alignment.center,
+                      color: const Color(0xFF00C172),
+                      width: double.infinity,
+                      height: double.infinity,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 40, top: 20),
+                            child: IntrinsicHeight(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(Icons.account_balance,
+                                              size: 18,
+                                              color: Colors.grey[850]),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            NumberFormatter
-                                                .formatIndianCurrency(
-                                                    _totalBalance),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                              fontSize: 28,
-                                            ),
-                                          )
-                                        else
-                                          const CircularProgressIndicator(),
-                                      ],
-                                    ),
-                                    VerticalDivider(
-                                      indent: 2,
-                                      endIndent: 2,
-                                      thickness: 2,
-                                      color: Colors.grey[850],
-                                    ),
-                                    Column(
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(Icons.payments,
-                                                size: 18,
+                                            'expense_tracker_total_balance'
+                                                .tr(),
+                                            style: TextStyle(
+                                                fontSize: 14,
                                                 color: Colors.grey[850]),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'expense_tracker_monthly_expense'
-                                                  .tr(),
-                                              style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[850]),
-                                            ),
-                                          ],
-                                        ),
-                                        if (_isDataLoaded)
+                                          ),
+                                        ],
+                                      ),
+                                      if (_isDataLoaded)
+                                        Text(
+                                          NumberFormatter.formatIndianCurrency(
+                                              _totalBalance),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: 28,
+                                          ),
+                                        )
+                                      else
+                                        const CircularProgressIndicator(),
+                                    ],
+                                  ),
+                                  VerticalDivider(
+                                    indent: 2,
+                                    endIndent: 2,
+                                    thickness: 2,
+                                    color: Colors.grey[850],
+                                  ),
+                                  Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(Icons.payments,
+                                              size: 18,
+                                              color: Colors.grey[850]),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            '-' +
-                                                NumberFormatter
-                                                    .formatIndianCurrency(
-                                                        _monthlyExpense),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Color.fromARGB(
-                                                  255, 16, 93, 225),
-                                              fontSize: 28,
-                                            ),
-                                          )
-                                        else
-                                          const CircularProgressIndicator(),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                            'expense_tracker_monthly_expense'
+                                                .tr(),
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[850]),
+                                          ),
+                                        ],
+                                      ),
+                                      if (_isDataLoaded)
+                                        Text(
+                                          '-' +
+                                              NumberFormatter
+                                                  .formatIndianCurrency(
+                                                      _monthlyExpense),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Color.fromARGB(
+                                                255, 16, 93, 225),
+                                            fontSize: 28,
+                                          ),
+                                        )
+                                      else
+                                        const CircularProgressIndicator(),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
-                            ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                    shadowColor: Colors.black,
-                                    padding: EdgeInsets.only(
-                                        top: 15,
-                                        bottom: 15,
-                                        left: 30,
-                                        right: 30),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(16)),
-                                    elevation: 5,
-                                    backgroundColor: Colors.grey[900],
-                                    foregroundColor: Colors.white70,
-                                    textStyle: TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold),
-                                    iconSize: 20),
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              FinanceTrackerPage())).then((_) {
-                                    _updateData();
-                                  });
-                                },
-                                child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.receipt_long),
-                                      const SizedBox(
-                                        width: 8,
-                                      ),
-                                      Text('expense_tracker_button'.tr())
-                                    ]))
-                          ],
-                        ),
+                          ),
+                          ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  shadowColor: Colors.black,
+                                  padding: EdgeInsets.only(
+                                      top: 15, bottom: 15, left: 30, right: 30),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
+                                  elevation: 5,
+                                  backgroundColor: Colors.grey[900],
+                                  foregroundColor: Colors.white70,
+                                  textStyle: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold),
+                                  iconSize: 20),
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            FinanceTrackerPage())).then((_) {
+                                  _updateData();
+                                });
+                              },
+                              child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.receipt_long),
+                                    const SizedBox(
+                                      width: 8,
+                                    ),
+                                    Text('expense_tracker_button'.tr())
+                                  ]))
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40),
-                  Expanded(
-                    flex: 2,
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(48),
-                        topRight: Radius.circular(48),
-                      ),
-                      child: Container(
-                        color: const Color.fromARGB(255, 172, 198, 187),
-                        child: ListView(
-                          scrollDirection: Axis.vertical,
-                          physics: const BouncingScrollPhysics(),
-                          children: [
-                            const SizedBox(height: 30),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Options(
-                                  title: "option_banking_details".tr(),
-                                  imgPath: images[0],
-                                  filePath: files[0],
-                                ),
-                                Options(
-                                  title: "option_post_office".tr(),
-                                  imgPath: images[1],
-                                  filePath: files[1],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 30),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Options(
-                                  title: "option_health_insurance".tr(),
-                                  imgPath: images[2],
-                                  filePath: files[2],
-                                ),
-                                Options(
-                                  title: "option_life_insurance".tr(),
-                                  imgPath: images[3],
-                                  filePath: files[3],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 30),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Options(
-                                  title: "option_vehicle_insurance".tr(),
-                                  imgPath: images[4],
-                                  filePath: files[4],
-                                ),
-                                Options(
-                                  title: "option_alt_investments".tr(),
-                                  imgPath: images[0],
-                                  filePath: files[5],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-                        ),
+                ),
+                const SizedBox(height: 40),
+                Expanded(
+                  flex: 2,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(48),
+                      topRight: Radius.circular(48),
+                    ),
+                    child: Container(
+                      color: const Color.fromARGB(255, 172, 198, 187),
+                      child: ListView(
+                        scrollDirection: Axis.vertical,
+                        physics: const BouncingScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 30),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Options(
+                                title: "option_banking_details".tr(),
+                                imgPath: images[0],
+                                filePath: files[0],
+                              ),
+                              Options(
+                                title: "option_post_office".tr(),
+                                imgPath: images[1],
+                                filePath: files[1],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 30),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Options(
+                                title: "option_health_insurance".tr(),
+                                imgPath: images[2],
+                                filePath: files[2],
+                              ),
+                              Options(
+                                title: "option_life_insurance".tr(),
+                                imgPath: images[3],
+                                filePath: files[3],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 30),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Options(
+                                title: "option_vehicle_insurance".tr(),
+                                imgPath: images[4],
+                                filePath: files[4],
+                              ),
+                              Options(
+                                title: "option_alt_investments".tr(),
+                                imgPath: images[0],
+                                filePath: files[5],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 30),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

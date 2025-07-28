@@ -105,7 +105,10 @@ class _VehicleInsuranceDetailsState extends State<VehicleInsuranceDetails> {
       final data = form.toVehicleInsurance();
       _viBox.put(form.key, data);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('vi_save_success'.tr())),
+        SnackBar(
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            content: Text('vi_save_success'.tr())),
       );
     }
   }

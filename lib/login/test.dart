@@ -233,6 +233,7 @@ class _LoginState extends State<Login> {
         context: context,
         builder: (context) {
           return AlertDialog(
+            backgroundColor: Colors.grey[900],
             elevation: 10,
             title: const Text(
               "Reset Password",
@@ -262,7 +263,10 @@ class _LoginState extends State<Login> {
                         controller: forgotPwdEmailCtrl,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          label: const Text("Enter Your Email"),
+                          label: const Text(
+                            "Enter Your Email",
+                            style: TextStyle(color: Colors.white70),
+                          ),
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: const BorderSide(
@@ -295,6 +299,7 @@ class _LoginState extends State<Login> {
                       if (success && mounted) {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            behavior: SnackBarBehavior.floating,
                             backgroundColor: Colors.green,
                             content:
                                 Text("Password reset email sent to $email.")));
@@ -337,8 +342,10 @@ class _LoginState extends State<Login> {
           message = "Error: ${e.message}";
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(backgroundColor: Colors.red, content: Text(message)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+            content: Text(message)));
       }
       Navigator.pop(context);
       FocusScope.of(context).unfocus();
@@ -348,6 +355,7 @@ class _LoginState extends State<Login> {
       FocusScope.of(context).unfocus();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            behavior: SnackBarBehavior.floating,
             backgroundColor: Colors.red,
             content: Text('Error: ${error.toString()}')));
       }
@@ -388,7 +396,7 @@ class _LoginState extends State<Login> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/photos/pf_logo.png',
+              'assets/photos/drawer_logo.png',
               height: 100,
               width: 100,
             ),

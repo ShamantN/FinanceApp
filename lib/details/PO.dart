@@ -142,7 +142,10 @@ class _PostOfficeInvestmentDetailsState
         await _scheduleMaturityNotifications(data, form.key);
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('po_save_success'.tr())),
+        SnackBar(
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            content: Text('po_save_success'.tr())),
       );
     }
   }
@@ -276,7 +279,10 @@ class _PostOfficeInvestmentDetailsState
 
               if (notificationTime.isBefore(tz.TZDateTime.now(tz.local))) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('po_test_notification_error'.tr())),
+                  SnackBar(
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      content: Text('po_test_notification_error'.tr())),
                 );
                 return;
               }
@@ -320,7 +326,10 @@ class _PostOfficeInvestmentDetailsState
               );
 
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('po_test_notification_success'.tr())),
+                SnackBar(
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    content: Text('po_test_notification_success'.tr())),
               );
             },
             child: Text('save'.tr()),

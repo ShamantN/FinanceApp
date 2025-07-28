@@ -29,10 +29,10 @@ class Documents extends StatefulWidget {
   const Documents({super.key});
 
   @override
-  State<Documents> createState() => _DocumentsState();
+  State<Documents> createState() => DocumentsState();
 }
 
-class _DocumentsState extends State<Documents> {
+class DocumentsState extends State<Documents> {
   late Box<DocumentModel> documentBox;
   bool isLoading = true;
   String? errorMessage;
@@ -144,7 +144,7 @@ class _DocumentsState extends State<Documents> {
     }
   }
 
-  Future<void> _addDocument() async {
+  Future<void> addDocument() async {
     // First, let user select document type
     final selectedType = await showDialog<DocumentType>(
       context: context,
@@ -500,207 +500,182 @@ class _DocumentsState extends State<Documents> {
         ),
       );
     }
-    return Scaffold(
-      backgroundColor: Colors.grey,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text(
-          "ನನ್ನ ದಾಖಲೆಗಳು / My Documents",
-          style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        backgroundColor: Colors.orange.shade700,
-        elevation: 0,
-      ),
-      body: ValueListenableBuilder(
-        valueListenable: documentBox.listenable(),
-        builder: (context, Box<DocumentModel> box, _) {
-          if (box.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    return ValueListenableBuilder(
+      valueListenable: documentBox.listenable(),
+      builder: (context, Box<DocumentModel> box, _) {
+        if (box.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.folder_open,
+                  size: 100,
+                  color: Colors.orange.shade300,
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  "ಇನ್ನೂ ಯಾವುದೇ ದಾಖಲೆಗಳಿಲ್ಲ",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "No documents uploaded yet",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                border: Border(
+                    bottom:
+                        BorderSide(color: Colors.orange.shade200, width: 2)),
+              ),
+              child: Row(
                 children: [
-                  Icon(
-                    Icons.folder_open,
-                    size: 100,
-                    color: Colors.orange.shade300,
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "ಇನ್ನೂ ಯಾವುದೇ ದಾಖಲೆಗಳಿಲ್ಲ",
+                  Icon(Icons.folder, color: Colors.orange.shade700, size: 28),
+                  const SizedBox(width: 12),
+                  Text(
+                    "ಒಟ್ಟು ${box.length} ದಾಖಲೆ${box.length == 1 ? '' : 'ಗಳು'} / Total ${box.length} Document${box.length == 1 ? '' : 's'}",
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: Colors.orange.shade700,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "No documents uploaded yet",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                 ],
               ),
-            );
-          }
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: box.length,
+                itemBuilder: (context, index) {
+                  final doc = box.getAt(index);
+                  if (doc == null) return const SizedBox.shrink();
 
-          return Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  border: Border(
-                      bottom:
-                          BorderSide(color: Colors.orange.shade200, width: 2)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.folder, color: Colors.orange.shade700, size: 28),
-                    const SizedBox(width: 12),
-                    Text(
-                      "ಒಟ್ಟು ${box.length} ದಾಖಲೆ${box.length == 1 ? '' : 'ಗಳು'} / Total ${box.length} Document${box.length == 1 ? '' : 's'}",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.orange.shade700,
-                      ),
+                  final docType = _getDocumentTypeFromTitle(doc.title);
+                  final extension = _getFileExtension(doc.path);
+
+                  return Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: box.length,
-                  itemBuilder: (context, index) {
-                    final doc = box.getAt(index);
-                    if (doc == null) return const SizedBox.shrink();
-
-                    final docType = _getDocumentTypeFromTitle(doc.title);
-                    final extension = _getFileExtension(doc.path);
-
-                    return Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () => _openDocument(doc.path),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: docType.color.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  docType.icon,
-                                  color: docType.color,
-                                  size: 32,
-                                ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => _openDocument(doc.path),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: docType.color.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      doc.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 18,
-                                      ),
+                              child: Icon(
+                                docType.icon,
+                                color: docType.color,
+                                size: 32,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    doc.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 18,
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      docType.englishName,
-                                      style: TextStyle(
-                                        color: docType.color,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    docType.englishName,
+                                    style: TextStyle(
+                                      color: docType.color,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color:
-                                                docType.color.withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            extension.toUpperCase(),
-                                            style: TextStyle(
-                                              color: docType.color,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: docType.color.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Icon(Icons.touch_app,
-                                            color: Colors.grey.shade500,
-                                            size: 16),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'ತೆರೆಯಲು ಒತ್ತಿ / Tap to open',
+                                        child: Text(
+                                          extension.toUpperCase(),
                                           style: TextStyle(
-                                            color: Colors.grey.shade600,
+                                            color: docType.color,
                                             fontSize: 12,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Icon(Icons.touch_app,
+                                          color: Colors.grey.shade500,
+                                          size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'ತೆರೆಯಲು ಒತ್ತಿ / Tap to open',
+                                        style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                onPressed: () => _deleteDocument(index),
-                                icon: Icon(
-                                  Icons.delete,
-                                  color: Colors.red.shade700,
-                                  size: 24,
-                                ),
-                                tooltip: 'ಅಳಿಸಿ / Delete',
+                            ),
+                            IconButton(
+                              onPressed: () => _deleteDocument(index),
+                              icon: Icon(
+                                Icons.delete,
+                                color: Colors.red.shade700,
+                                size: 24,
                               ),
-                            ],
-                          ),
+                              tooltip: 'ಅಳಿಸಿ / Delete',
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addDocument,
-        label: const Text(
-          "ದಾಖಲೆ ಸೇರಿಸಿ / Add Document",
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-        ),
-        icon: const Icon(Icons.add, size: 24),
-        backgroundColor: Colors.orange.shade700,
-        foregroundColor: Colors.white,
-        elevation: 6,
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

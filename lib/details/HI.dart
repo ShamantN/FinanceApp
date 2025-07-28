@@ -120,7 +120,10 @@ class _HealthInsuranceDetailsState extends State<HealthInsuranceDetails> {
       final data = form.toHealthInsurance();
       _hiBox.put(form.key, data);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('hi_save_success'.tr())),
+        SnackBar(
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            content: Text('hi_save_success'.tr())),
       );
     }
   }

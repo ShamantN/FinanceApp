@@ -496,7 +496,7 @@
   "expense_tracker_category_Other": "Other",
   "expense_tracker_add": "Add",
   "expense_tracker_add_success": "Transaction added successfully!",
-  "expense_tracker_total_balance": "Balance after expenses",
+  "expense_tracker_total_balance": "Net Balance",
   "expense_tracker_monthly_expense": "Monthly Expense",
   "expense_tracker_recent_transactions": "Recent Transactions",
   "expense_tracker_transactions_count": "{0} transactions",

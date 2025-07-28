@@ -90,6 +90,7 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
       SnackBar(
         content: Text('expense_tracker_delete_success'.tr()),
         backgroundColor: const Color(0xFF2E7D32),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -124,7 +125,8 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('expense_tracker_reset_success'.tr()),
-                    backgroundColor: const Color(0xFF2E7D32),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               },
@@ -337,7 +339,8 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('expense_tracker_balance_updated'.tr()),
-                      backgroundColor: const Color(0xFF2E7D32),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
                     ),
                   );
                 }
@@ -486,7 +489,8 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('expense_tracker_add_success'.tr()),
-                            backgroundColor: const Color(0xFF2E7D32),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
                           ),
                         );
                       }

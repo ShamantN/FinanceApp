@@ -185,14 +185,6 @@ class _BankDetailsPageState extends State<BankDetailsPage> {
     return AppLocalizations.get(key, _currentLanguage);
   }
 
-  List<String> _getAccountTypes() {
-    return AppLocalizations.getAccountTypes(_currentLanguage);
-  }
-
-  Map<String, String> _getAccountTypeMap() {
-    return AppLocalizations.getAccountTypeMap(_currentLanguage);
-  }
-
   void _addAccount() {
     setState(() {
       _accounts.add(BankAccount());
@@ -207,7 +199,10 @@ class _BankDetailsPageState extends State<BankDetailsPage> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_getText('at_least_one_account'))),
+        SnackBar(
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            content: Text(_getText('at_least_one_account'))),
       );
     }
   }
@@ -229,7 +224,10 @@ class _BankDetailsPageState extends State<BankDetailsPage> {
 
     _bankBox.put('accounts', bankData);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(_getText('accounts_saved'))),
+      SnackBar(
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          content: Text(_getText('accounts_saved'))),
     );
   }
 
@@ -581,7 +579,6 @@ class _BankDetailsPageState extends State<BankDetailsPage> {
                 itemCount: _accounts.length,
                 itemBuilder: (context, index) {
                   final account = _accounts[index];
-                  final accountTypeMap = _getAccountTypeMap();
 
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 8),

@@ -110,7 +110,9 @@ class _AlternateInvestmentDetailsState
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ai_no_user'.tr())),
+        SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text('ai_no_user'.tr())),
       );
       return;
     }
@@ -171,11 +173,17 @@ class _AlternateInvestmentDetailsState
         await _aiBox.put(form.key, data);
         await _scheduleMaturityNotifications(data, form.key);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ai_save_success'.tr())),
+          SnackBar(
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              content: Text('ai_save_success'.tr())),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ai_save_error'.tr(args: [e.toString()]))),
+          SnackBar(
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              content: Text('ai_save_error'.tr(args: [e.toString()]))),
         );
       }
     } else {
@@ -183,6 +191,7 @@ class _AlternateInvestmentDetailsState
         SnackBar(
           content: Text('ai_validation_error'.tr()),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
@@ -305,7 +314,10 @@ class _AlternateInvestmentDetailsState
 
               if (notificationTime.isBefore(tz.TZDateTime.now(tz.local))) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('ai_test_notification_error'.tr())),
+                  SnackBar(
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      content: Text('ai_test_notification_error'.tr())),
                 );
                 return;
               }
@@ -351,7 +363,10 @@ class _AlternateInvestmentDetailsState
               );
 
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('ai_test_notification_success'.tr())),
+                SnackBar(
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                    content: Text('ai_test_notification_success'.tr())),
               );
             },
             child: Text('save'.tr()),
@@ -1328,9 +1343,8 @@ class AlternateInvestmentForm {
     currentValueCtrl.text = data.currentValue.toString();
     purchaseDateCtrl.text =
         "${data.purchaseDate.day}/${data.purchaseDate.month}/${data.purchaseDate.year}";
-    maturityDateCtrl.text = data.maturityDate != null
-        ? "${data.maturityDate.day}/${data.maturityDate.month}/${data.maturityDate.year}"
-        : "";
+    maturityDateCtrl.text =
+        "${data.maturityDate.day}/${data.maturityDate.month}/${data.maturityDate.year}";
     expectedReturnCtrl.text = data.expectedReturn.toString();
     remarksCtrl.text = data.remarks;
     selectedFundType = fundTypes.contains(data.fundType) ? data.fundType : null;
