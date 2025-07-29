@@ -35,6 +35,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<AppBar> _appBars = [
     AppBar(
+      iconTheme: IconThemeData(color: Colors.black),
       title: const Text("select_option_title").tr(),
       centerTitle: true,
       titleTextStyle: const TextStyle(
@@ -43,11 +44,12 @@ class _MainScreenState extends State<MainScreen> {
         color: Colors.white,
         fontSize: 30,
       ),
-      backgroundColor: const Color(0xFF00C172),
+      backgroundColor: const Color(0xFF00796B),
       elevation: 0,
       shadowColor: Colors.transparent,
     ),
     AppBar(
+      iconTheme: IconThemeData(color: Colors.black),
       title: const Text(
         "ನನ್ನ ದಾಖಲೆಗಳು / My Documents",
         style: TextStyle(
@@ -57,6 +59,7 @@ class _MainScreenState extends State<MainScreen> {
       elevation: 0,
     ),
     AppBar(
+      iconTheme: IconThemeData(color: Colors.black),
       toolbarHeight: 80,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -73,6 +76,7 @@ class _MainScreenState extends State<MainScreen> {
       foregroundColor: Colors.black,
     ),
     AppBar(
+      iconTheme: IconThemeData(color: Colors.black),
       centerTitle: true,
       title: const Text(
         "Edit Profile",

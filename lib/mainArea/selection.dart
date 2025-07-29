@@ -128,7 +128,7 @@ class _SelectOptionState extends State<SelectOption> {
           return const Center(child: CircularProgressIndicator());
         }
         return Container(
-          decoration: const BoxDecoration(color: Color(0xFF00C172)),
+          decoration: const BoxDecoration(color: const Color(0xFF00796B)),
           child: Center(
             child: Column(
               children: [
@@ -137,7 +137,7 @@ class _SelectOptionState extends State<SelectOption> {
                   child: Center(
                     child: Container(
                       alignment: Alignment.center,
-                      color: const Color(0xFF00C172),
+                      color: const Color(0xFF00796B),
                       width: double.infinity,
                       height: double.infinity,
                       child: Column(
@@ -212,8 +212,7 @@ class _SelectOptionState extends State<SelectOption> {
                                                       _monthlyExpense),
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: Color.fromARGB(
-                                                255, 16, 93, 225),
+                                            color: Colors.lightBlue,
                                             fontSize: 28,
                                           ),
                                         )
