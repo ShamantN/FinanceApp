@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -8,7 +9,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:easy_localization/easy_localization.dart';
 
-// Payment Model
+// PaymentReminder class remains unchanged
 class PaymentReminder {
   final String id;
   final String title;
@@ -73,7 +74,7 @@ class PaymentReminder {
   }
 }
 
-// Notification Service
+// NotificationService remains unchanged
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
@@ -203,7 +204,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _loadReminders() async {
     final prefs = await SharedPreferences.getInstance();
-    final remindersJson = prefs.getStringList('payment_reminders') ?? [];
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final remindersJson = prefs.getStringList('payment_reminders_$uid') ?? [];
 
     setState(() {
       _reminders = remindersJson
@@ -214,10 +216,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _saveReminders() async {
     final prefs = await SharedPreferences.getInstance();
+    final uid = FirebaseAuth.instance.currentUser!.uid;
     final remindersJson =
         _reminders.map((reminder) => jsonEncode(reminder.toJson())).toList();
 
-    await prefs.setStringList('payment_reminders', remindersJson);
+    await prefs.setStringList('payment_reminders_$uid', remindersJson);
   }
 
   Future<void> _addReminder() async {

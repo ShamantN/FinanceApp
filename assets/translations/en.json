@@ -306,6 +306,7 @@
     "po_test_notification_body": "This is a test notification from your Personal Finance Manager.",
     "po_test_notification_success": "Test notification scheduled successfully!",
     "po_test_notification_error": "Please select a future date and time for the test notification.",
+    "po_days": "Days Left",
     "ai_title": "Alternate Investment Details",
     "ai_no_investments": "No investment records added yet.",
     "ai_no_user": "No user is logged in",

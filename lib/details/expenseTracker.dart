@@ -100,17 +100,19 @@ class _FinanceTrackerPageState extends State<FinanceTrackerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.grey[850],
           title: Text(
             'expense_tracker_reset_title'.tr(),
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.black),
           ),
-          content: Text('expense_tracker_reset_content'.tr()),
+          content: Text('expense_tracker_reset_content'.tr(),
+              style: TextStyle(color: Colors.white70)),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text('expense_tracker_cancel'.tr()),
             ),
-            const SizedBox(width: 125),
             ElevatedButton(
               onPressed: () async {
                 await _transactionBox.clear();

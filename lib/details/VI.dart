@@ -129,9 +129,9 @@ class _VehicleInsuranceDetailsState extends State<VehicleInsuranceDetails> {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color.fromARGB(255, 197, 232, 154),
-            Color.fromARGB(255, 127, 169, 115),
-            Color.fromARGB(255, 100, 209, 103),
+            Color.fromARGB(255, 154, 197, 232),
+            Color.fromARGB(255, 115, 149, 169),
+            Color.fromARGB(255, 103, 149, 209),
           ],
           stops: [0.0, 0.5, 1.0],
           begin: Alignment.topCenter,
@@ -169,7 +169,7 @@ class _VehicleInsuranceDetailsState extends State<VehicleInsuranceDetails> {
               size: 30,
             ),
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: const Color(0xFF1E90FF),
         ),
         body: Column(
           children: [

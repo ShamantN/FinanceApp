@@ -68,13 +68,17 @@ class _ProfileState extends State<Profile> {
     try {
       final userUid = authInst.currentUser!.uid;
       final user = firestoreInst.collection("userInfo").doc(userUid);
-      await user.update({
+      print('Current User UID: $userUid');
+      print('Updating document: userInfo/$userUid');
+      final data = {
         'name': _nameCtrl.text.trim(),
         'phone': _phoneCtrl.text.trim(),
         'dob': selectedDate != null ? Timestamp.fromDate(selectedDate!) : null,
         'country': selectedCountry,
         'state': selectedState
-      });
+      };
+      print('Updating with: $data'); // Log the data for debugging
+      await user.update(data);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
@@ -175,6 +179,7 @@ class _ProfileState extends State<Profile> {
     IconData icon, {
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
+    String? Function(String?)? validator,
   }) {
     return Container(
       margin: EdgeInsets.only(bottom: pad),
@@ -185,6 +190,7 @@ class _ProfileState extends State<Profile> {
         obscureText: obscureText,
         cursorColor: Colors.white,
         style: const TextStyle(fontSize: 16, color: Colors.white),
+        validator: validator,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: Colors.white),
@@ -390,7 +396,7 @@ class _ProfileState extends State<Profile> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 behavior: SnackBarBehavior.floating,
-                content: Text("Please Enter The Correct CURRENT passoword"),
+                content: Text("Please Enter The Correct CURRENT password"),
                 backgroundColor: Colors.red,
               ),
             );
@@ -421,7 +427,7 @@ class _ProfileState extends State<Profile> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text("An Unexpected Error Has Occured: ${e.toString()}"),
+          content: Text("An Unexpected Error Has Occurred: ${e.toString()}"),
           backgroundColor: Colors.red,
         ),
       );
@@ -572,14 +578,35 @@ class _ProfileState extends State<Profile> {
                     children: [
                       _buildSectionHeader('Personal Information'),
                       _buildTextField(
-                          true, 20, _nameCtrl, 'Name', Icons.person_outline),
+                        true,
+                        20,
+                        _nameCtrl,
+                        'Name',
+                        Icons.person_outline,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Name cannot be empty';
+                          }
+                          return null;
+                        },
+                      ),
                       _buildTextField(
-                          false, 20, _emailCtrl, 'Email', Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress),
+                        false,
+                        20,
+                        _emailCtrl,
+                        'Email',
+                        Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
                       _buildDateField(),
                       _buildTextField(
-                          false, 5, _pwdCtrl, 'Password', Icons.lock_outline,
-                          obscureText: true),
+                        false,
+                        5,
+                        _pwdCtrl,
+                        'Password',
+                        Icons.lock_outline,
+                        obscureText: true,
+                      ),
                       GestureDetector(
                           onTap: () {
                             HapticFeedback.lightImpact();
@@ -593,9 +620,24 @@ class _ProfileState extends State<Profile> {
                           )),
                       const SizedBox(height: 30),
                       _buildSectionHeader('Contact Information'),
-                      _buildTextField(true, 20, _phoneCtrl, 'Phone Number',
-                          Icons.phone_outlined,
-                          keyboardType: TextInputType.phone),
+                      _buildTextField(
+                        true,
+                        20,
+                        _phoneCtrl,
+                        'Phone Number',
+                        Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Phone number cannot be empty';
+                          }
+                          if (!RegExp(r'^\+?[0-9]{7,15}$')
+                              .hasMatch(value.trim())) {
+                            return 'Enter a valid phone number (7-15 digits, optional +)';
+                          }
+                          return null;
+                        },
+                      ),
                       _buildCountryField(
                           'Select your country', 'Country', countires),
                       _buildCountryField('Select your state', 'State', states),
@@ -620,7 +662,9 @@ class _ProfileState extends State<Profile> {
                         ),
                         child: ElevatedButton(
                           onPressed: () async {
-                            await updateUserData();
+                            if (_formKey.currentState!.validate()) {
+                              await updateUserData();
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
